@@ -81,6 +81,19 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  --tower-primary: #081c4b;
+  --tower-primary-light: #0f2f75;
+
+  --tower-accent: #3478f6;
+
+  --tower-bg: #eef2f7;
+
+  --tower-success: #27ae60;
+  --tower-warning: #f1b500;
+  --tower-danger: #e74c3c;
+
+  --tower-purple: #8b5cf6;
 }
 
 .dark {
@@ -123,6 +136,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    background: var(--tower-bg);
   }
   html {
     @apply font-sans;
