@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Data flow when the user changes Time Range</title>
+  <desc id="d">Seven steps from the TimeRangeSelect view through the controller, store, query, repository and mapper, back to a re-rendered view.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0L10 5L0 10z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="960" height="360" fill="#ffffff"/>
+  <text x="480" y="28" font-size="16" font-weight="700" text-anchor="middle" fill="#16213d">User changes Time Range → Today to Yesterday</text>
+
+  <!-- Row 1: forward path -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="20" y="60" width="170" height="86" rx="8" fill="#e8f0ff" stroke="#2f7cf6" stroke-width="2"/>
+    <text x="105" y="84" font-weight="700" fill="#1d3a7a">① VIEW</text>
+    <text x="105" y="106" fill="#16213d">TimeRangeSelect</text>
+    <text x="105" y="126" font-size="12" fill="#475569">onChange("yesterday")</text>
+
+    <rect x="215" y="60" width="170" height="86" rx="8" fill="#fff4e0" stroke="#f59a23" stroke-width="2"/>
+    <text x="300" y="84" font-weight="700" fill="#8a5300">② CONTROL</text>
+    <text x="300" y="106" fill="#16213d">useShellController</text>
+    <text x="300" y="126" font-size="12" fill="#475569">setTimeRange()</text>
+
+    <rect x="410" y="60" width="170" height="86" rx="8" fill="#e6f7ee" stroke="#1fb46b" stroke-width="2"/>
+    <text x="495" y="84" font-weight="700" fill="#0f6b3f">③ MODEL</text>
+    <text x="495" y="106" fill="#16213d">filtersStore</text>
+    <text x="495" y="126" font-size="12" fill="#475569">timeRange = yesterday</text>
+
+    <rect x="605" y="60" width="170" height="86" rx="8" fill="#f1eaff" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="690" y="84" font-weight="700" fill="#4c2a9e">④ SERVICE</text>
+    <text x="690" y="106" fill="#16213d">Query key changes →</text>
+    <text x="690" y="126" font-size="12" fill="#475569">repo.getOverview(range)</text>
+
+    <rect x="805" y="60" width="140" height="86" rx="8" fill="#f1f5f9" stroke="#64748b" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="875" y="84" font-weight="700" fill="#334155">BACKEND</text>
+    <text x="875" y="106" fill="#16213d">GET /overview</text>
+    <text x="875" y="126" font-size="12" fill="#475569">?range=yesterday</text>
+  </g>
+  <line x1="190" y1="103" x2="213" y2="103" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="385" y1="103" x2="408" y2="103" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="580" y1="103" x2="603" y2="103" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="775" y1="103" x2="803" y2="103" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- Down from backend -->
+  <path d="M875 146 V190" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="887" y="172" font-size="12" fill="#475569">DTO (JSON)</text>
+
+  <!-- Row 2: return path (right to left) -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="605" y="190" width="170" height="86" rx="8" fill="#f1eaff" stroke="#8b5cf6" stroke-width="2"/>
+    <text x="690" y="214" font-weight="700" fill="#4c2a9e">⑤ SERVICE</text>
+    <text x="690" y="236" fill="#16213d">Mapper: DTO → domain</text>
+    <text x="690" y="256" font-size="12" fill="#475569">cached by TanStack Query</text>
+
+    <rect x="410" y="190" width="170" height="86" rx="8" fill="#fff4e0" stroke="#f59a23" stroke-width="2"/>
+    <text x="495" y="214" font-weight="700" fill="#8a5300">⑥ CONTROL</text>
+    <text x="495" y="236" fill="#16213d">domain/kpi.ts rules</text>
+    <text x="495" y="256" font-size="12" fill="#475569">→ builds view-model</text>
+
+    <rect x="215" y="190" width="170" height="86" rx="8" fill="#e8f0ff" stroke="#2f7cf6" stroke-width="2"/>
+    <text x="300" y="214" font-weight="700" fill="#1d3a7a">⑦ VIEW</text>
+    <text x="300" y="236" fill="#16213d">KPI cards, charts</text>
+    <text x="300" y="256" font-size="12" fill="#475569">re-render with new props</text>
+  </g>
+  <path d="M875 190 V233 H777" stroke="#475569" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <line x1="605" y1="233" x2="582" y2="233" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="410" y1="233" x2="387" y2="233" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <text x="480" y="322" font-size="12" text-anchor="middle" font-style="italic" fill="#64748b">Views never call the backend; only the Service layer knows URLs and JSON shapes.</text>
+  <text x="480" y="342" font-size="12" text-anchor="middle" font-style="italic" fill="#64748b">Local-only toggles (e.g. View Mode) stop at step ③ and re-render without a request.</text>
+</svg>
