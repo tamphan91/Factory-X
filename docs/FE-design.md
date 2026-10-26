@@ -172,9 +172,9 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | Component | Notes | Status |
 |---|---|---|
 | `OverviewPage` | grid composition | Implemented as `OverviewPage` (`features/overview/overview-page.tsx`) – composes cards from `components/overview/`; static data |
-| `SupplyRateCard` | donut + delivered/overdue + delta | Partial as `SupplyRateCard` (`components/overview/supply-rate-card.tsx`) – layout done; values hard-coded, no props |
+| `SupplyRateCard` | thin wrapper on the shared `GaugeKpiCard` (ring, current stats, overview, notice, delta); design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Partial as `SupplyRateCard` (`components/overview/supply-rate-card.tsx`) – layout done; values hard-coded, no props |
 | `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component**; design notes in [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
-| `StagingCard` / `WarehouseCard` | built from a generic `OccupancyKpiCard` – **refactor to one component** | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; generic `OccupancyKpiCard` not created |
+| `StagingCard` / `WarehouseCard` | thin wrappers on the same shared `GaugeKpiCard` as `SupplyRateCard`, each with its own tone rule; design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; shared `GaugeKpiCard` not created |
 | `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars; not yet sharing props, colours or parent card with `ThroughputChart` |
 | `AlertsPanel` | filter select + View All | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
 | `AlertItem` | icon by severity, title, detail, time | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
@@ -381,6 +381,7 @@ data (Model) ──► rule (domain/tone.ts, thresholds.ts) ──► Tone ─�
 | Negative change vs. yesterday | `deltaTone(delta, upIsGood)` | lead time ↑ → `bad`, throughput ↑ → `good` |
 | Target not met | `targetTone(value, target, direction)` | picking 28 min vs. target ≤ 30 min → `good`; 32 min → `bad` |
 | Late deadline | `deadlineTone(dueAt, now, doneAt?)` | overdue count > 0 → `late`; due within the warning window → `warning` |
+| Ring / percentage KPI (supply on-time, staging, warehouse) | `thresholdRule({ direction, goodAt, warningAt })` – one abstract function, thresholds per card in `domain/thresholds.ts` | on-time 96 % → `warning`; warehouse 68 % → `good`; 8 overdue → `critical` (see [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)) |
 | Alert severity | `alertTone(severity)` | `critical` / `warning` / `info` → matching tone and icon |
 | Table cell highlight | `cellTone(column, value)` | queue ≥ 8 or lead time ≥ 28 min → `bad` |
 | Missing or stale data | `dataTone(value, fetchedAt, maxAge)` | `null`, error or older than 2 × refresh interval → `unavailable` |
