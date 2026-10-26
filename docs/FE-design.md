@@ -136,7 +136,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DeltaIndicator` | `value: string`, `upIsGood: boolean`, `caption?` – ↑/↓ coloured | KPI cards, resources, totals | Not implemented – delta markup is duplicated inside each KPI card |
 | `ProgressBar` | `percent`, `tone`, `height` – `.track/.fill` | throughput, resources | Not implemented – inlined in `ThroughputSummaryCard` |
 | `DonutGauge` | `percent`, `tone`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (`components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no tone |
-| `Sparkline` | `data[]`, `tone` | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) – takes `color` instead of `tone` |
+| `Sparkline` | `data[]`, `color` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) |
 | `KpiCardShell` | `title`, `children` | KPI cards | Partial as `KpiCardShell` (`components/dashboard/kpi-card-shell.tsx`) – fixed height, `children` only, no `title` prop |
 | `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Not implemented – `lucide-react` icons used directly (only in `AlertsPanel`) |
 | `Legend` | `items: {color, label, dashed?}[]` | layout, queue, simulation | Not implemented |
@@ -173,7 +173,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 |---|---|---|
 | `OverviewPage` | grid composition | Implemented as `OverviewPage` (`features/overview/overview-page.tsx`) – composes cards from `components/overview/`; static data |
 | `SupplyRateCard` | donut + delivered/overdue + delta | Partial as `SupplyRateCard` (`components/overview/supply-rate-card.tsx`) – layout done; values hard-coded, no props |
-| `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component** | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
+| `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component**; design notes in [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
 | `StagingCard` / `WarehouseCard` | built from a generic `OccupancyKpiCard` – **refactor to one component** | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; generic `OccupancyKpiCard` not created |
 | `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars; not yet sharing props, colours or parent card with `ThroughputChart` |
 | `AlertsPanel` | filter select + View All | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
@@ -405,8 +405,9 @@ When several rules apply to the same element, take the **most severe** tone: `cr
 
 | Element | Change when tone changes |
 |---|---|
-| `DeltaIndicator`, KPI value | text colour and arrow; `unavailable` shows "–" and hides the delta |
-| `Sparkline`, `DonutGauge`, `ProgressBar` | line / fill colour from `tone`; `unavailable` shows a dashed grey line or empty ring |
+| `DeltaIndicator`, KPI value | text colour and arrow from `deltaTone(delta, upIsGood)` (e.g. "-12%", "+15%"); `unavailable` shows "–" and hides the delta |
+| `Sparkline` | **not tone-driven**: the line and fill always use the process colour (`PROCESS_COLOR`, §2.3.1). Empty data shows no line and "No data" |
+| `DonutGauge`, `ProgressBar` | fill colour from `tone`; `unavailable` shows an empty ring / track |
 | `ZoneTile`, `ResourceRow` | bar colour, border and alert dot (`critical`, `late`) |
 | Table cell | background tint and bold text (`bad`, `critical`) |
 | `AlertItem` | left border, icon circle and background by severity |
