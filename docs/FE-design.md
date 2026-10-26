@@ -175,10 +175,10 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `SupplyRateCard` | donut + delivered/overdue + delta | Partial as `SupplyRateCard` (`components/overview/supply-rate-card.tsx`) – layout done; values hard-coded, no props |
 | `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component** | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
 | `StagingCard` / `WarehouseCard` | built from a generic `OccupancyKpiCard` – **refactor to one component** | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; generic `OccupancyKpiCard` not created |
-| `ThroughputSummaryCard` | progress bars per process | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars |
+| `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars; not yet sharing props, colours or parent card with `ThroughputChart` |
 | `AlertsPanel` | filter select + View All | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
 | `AlertItem` | icon by severity, title, detail, time | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
-| `ThroughputChart` | Actual / Actual vs Plan toggle | Partial as `ThroughputChart` (`components/overview/throughput-chart.tsx`) – static bars; mode select not wired, no Plan series |
+| `ThroughputCard` (`orientation="vertical"`) | column chart per process, actual and target, with Actual / Actual vs Target dropdown (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputChart` (`components/overview/throughput-chart.tsx`) – static bars; mode select not wired, no target series; own copy of the colours |
 
 #### Warehouse Operations (`features/warehouse/`)
 
@@ -231,6 +231,54 @@ Every specialized component receives a **view-model** (display-ready values: for
 export type SupplyRateVM = { percent: number; tone: Tone; delivered: string; overdue: number; delta: DeltaVM };
 ```
 
+#### 2.3.1 One data set, two presentations: `ThroughputCard`
+
+The Overview page shows the same throughput information twice: as horizontal progress bars (KPI row, "Throughput (Today)") and as a vertical column chart (main area, "Throughput by Process"). They are **one component with an `orientation`**, not two components:
+
+1. **Same data.** Both draw from the same `ThroughputItem[]` (one entry per process), built once in `useOverviewController`.
+2. **Same process colours.** Colours identify the process, not good/bad. They are defined once as `--fx-process-*` tokens (§2.4) and a `PROCESS_COLOR` map in `domain/process.ts`. Both orientations read it; no hex values in either file. (Today the two files carry slightly different blues, `#3b82f6` and `#3478f6`.)
+3. **Same parent card and one entry function.** `ThroughputCard` renders the common `PanelCard` and, depending on `orientation`, returns the horizontal or the vertical card.
+4. **Different content, by design.**
+
+| | `orientation="horizontal"` | `orientation="vertical"` |
+|---|---|---|
+| Shows | **actual** only, for the selected period (default "Today") | **actual and target** |
+| Header | title, period label, unit "(pallets)" | title only |
+| Dropdown | none | Actual / Actual vs Target |
+| Body | one `ProgressBar` per process, value at the right | column chart (`EChart`), y-axis "Pallets" |
+| Target data | ignored | shown as grouped columns when the mode is "Actual vs Target" |
+
+```ts
+// domain/process.ts
+export type ProcessKey = "inbound" | "putaway" | "picking" | "delivery";
+export const PROCESS_COLOR: Record<ProcessKey, string> = {
+  inbound: "var(--fx-process-inbound)", putaway: "var(--fx-process-putaway)",
+  picking: "var(--fx-process-picking)", delivery: "var(--fx-process-delivery)",
+};
+
+// features/overview/overview.vm.ts
+export type ThroughputItem = { process: ProcessKey; label: string; actual: number; target?: number };
+
+type ThroughputCardBase = { items: ThroughputItem[]; unit?: string };      // identical for both
+
+export type ThroughputCardProps =
+  | (ThroughputCardBase & { orientation: "horizontal"; periodLabel?: string })
+  | (ThroughputCardBase & { orientation: "vertical"; mode: "actual" | "target";
+                            onModeChange: (m: "actual" | "target") => void });
+```
+
+```tsx
+export function ThroughputCard(props: ThroughputCardProps) {
+  return props.orientation === "horizontal"
+    ? <ThroughputHorizontalCard {...props} />   // PanelCard + ProgressBar rows, actual only
+    : <ThroughputVerticalCard {...props} />;    // PanelCard + mode FilterSelect + EChart
+}
+```
+
+Page usage: `<ThroughputCard orientation="horizontal" items={throughput} periodLabel="Today" />` in the KPI row and `<ThroughputCard orientation="vertical" items={throughput} mode={mode} onModeChange={setMode} />` in the main area. The data and colours come from the same controller, so the two can never disagree. Only the vertical card has a mode state, because only it has a dropdown. Details: [FE_ThroughputCard.md](FE_ThroughputCard.md).
+
+The same pattern applies to any other metric shown in two forms (for example occupancy shown as a gauge or as a bar): one card, one data prop, one `orientation` or `variant`.
+
 ### 2.4 Shared styles (applied site-wide, once)
 
 All visual constants live in **`app/globals.css`** as CSS variables mapped into Tailwind 4 via `@theme inline` (the project already does this for shadcn). No component uses a raw hex value; the existing `bg-[#081c4b]` / `text-white` repeated in `dashboard-tabs.tsx` should move to tokens.
@@ -260,6 +308,11 @@ All visual constants live in **`app/globals.css`** as CSS variables mapped into 
   --fx-purple:   #8b5cf6;
   --fx-teal:     #14b8a6;
   --fx-slate:    #7b8db3;
+  /* process identity colours – one definition, used by every card/chart (§2.3.1) */
+  --fx-process-inbound:  #2f7cf6;
+  --fx-process-putaway:  #1fb46b;
+  --fx-process-picking:  #f59a23;
+  --fx-process-delivery: #8b5cf6;
   /* shape & type */
   --fx-radius-card: 6px;
   --fx-font: "Barlow Semi Condensed", "Roboto Condensed", "Arial Narrow", "Segoe UI", Arial, sans-serif;
