@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import logo from '../../app/logo3.png'
 import {
     Select,
     SelectContent,
@@ -8,15 +8,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import Image from "next/image";
 
 export function DashboardHeader() {
     return (
         <header className="bg-[#081c4b] text-white">
             <div className="px-4 pt-2">
                 <div className="flex justify-between ">
-                    <div className="flex align-center gap-4">
-                        <h1 className="text-5xl font-bold">
-                            FactoryX
+                    <div className="flex align-center gap-2 mb-2 items-center">
+                        <h1 className="text-5xl font-bold flex items-center">
+                            Factory
+                            <Image src={logo} alt="FactoryX Logo" height={80} />
                         </h1>
                         <div>
                             <h2 className="text-xl font-extrabold">
