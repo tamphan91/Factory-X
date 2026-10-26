@@ -1,6 +1,5 @@
 "use client";
 
-import logo from '../../app/logo3.png'
 import {
     Select,
     SelectContent,
@@ -9,6 +8,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
+import LogoutButton from './logout-button';
 
 export function DashboardHeader() {
     return (
@@ -18,7 +18,7 @@ export function DashboardHeader() {
                     <div className="flex align-center gap-2 mb-2 items-center">
                         <h1 className="text-5xl font-bold flex items-center">
                             Factory
-                            <Image src={logo} alt="FactoryX Logo" height={80} />
+                            <Image src="/images/logo.png" alt="FactoryX Logo" height={80} width={80}/>
                         </h1>
                         <div>
                             <h2 className="text-xl font-extrabold">
@@ -63,9 +63,10 @@ export function DashboardHeader() {
                             <div className="text-sm">
                                 <span className="text-green-400 text-xl mr-1">●</span>Live (5 min refresh)
                             </div>
-                            <span className="text-sm">
+                            <div className="text-sm">
                                 2026/10/23 13:47
-                            </span>
+                            </div>
+                            <LogoutButton />
                         </div>
                     </div>
                 </div>

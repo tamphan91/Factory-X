@@ -1,13 +1,8 @@
-import { DashboardFooter } from "@/components/footer/dashboard-footer";
-import { DashboardHeader } from "@/components/header/dashboard-header";
-import { DashboardTabs } from "@/components/tabs/dashboard-tabs";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return (
-    <div className="min-h-screen">
-      <DashboardHeader />
-      <DashboardTabs />
-      <DashboardFooter />
-    </div>
-  );
+export default async function HomePage() {
+  const session = await auth();
+
+  redirect(session ? "/dashboard" : "/login");
 }
