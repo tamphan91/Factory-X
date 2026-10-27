@@ -1,4 +1,8 @@
-import type { ProductDemand } from "@/models/types/product-demand";
+import type { Tone } from "@/models/domain/tone";
+import type {
+  ProductDemand,
+  ProductPriority,
+} from "@/models/types/product-demand";
 
 export type DemandSort = "order" | "desc" | "asc" | "name";
 
@@ -31,4 +35,16 @@ export const signalLevel = (requests: number, maxRequests: number): number => {
   }
   const level = Math.round((requests / maxRequests) * SIGNAL_LEVELS);
   return Math.max(1, Math.min(SIGNAL_LEVELS, level));
+};
+
+/** Colour of the signal bars. Priority comes from the data, so it does not follow the count. */
+export const productTone = (priority: ProductPriority | undefined): Tone => {
+  switch (priority) {
+    case "high":
+      return "critical";
+    case "mid":
+      return "warning";
+    default:
+      return "neutral";
+  }
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProductDemand } from "@/models/types/product-demand";
-import { signalLevel, sortProducts, totalRequests } from "./product-demand";
+import { productTone, signalLevel, sortProducts, totalRequests } from "./product-demand";
 
 const product = (name: string, requests: number): ProductDemand => ({
   id: name,
@@ -57,5 +57,16 @@ describe("signalLevel", () => {
 
   it("lights one bar when there is no largest count", () => {
     expect(signalLevel(0, 0)).toBe(1);
+  });
+});
+
+describe("productTone", () => {
+  it("maps each priority to a tone", () => {
+    expect(productTone("high")).toBe("critical");
+    expect(productTone("mid")).toBe("warning");
+  });
+
+  it("is neutral without a priority", () => {
+    expect(productTone(undefined)).toBe("neutral");
   });
 });
