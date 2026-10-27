@@ -3,15 +3,11 @@
 import { Card } from "@/views/common/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/views/common/ui/tabs";
 
-import {
-  Package,
-  Truck,
-  Warehouse,
-} from "lucide-react";
+import { Icon } from "@/views/common/icon";
 
 const resources = [
   {
-    icon: Warehouse,
+    icon: "warehouse" as const,
     label: "Storage (A-F)",
     used: 7,
     total: 8,
@@ -21,7 +17,7 @@ const resources = [
   },
 
   {
-    icon: Package,
+    icon: "package" as const,
     label: "Picking (G-I)",
     used: 16,
     total: 20,
@@ -31,7 +27,7 @@ const resources = [
   },
 
   {
-    icon: Truck,
+    icon: "truck" as const,
     label: "Staging",
     used: 6,
     total: 9,
@@ -46,8 +42,6 @@ function ResourceRow({
 }: {
   item: (typeof resources)[0];
 }) {
-  const Icon = item.icon;
-
   return (
     <div className="py-4 border-b last:border-b-0">
 
@@ -56,12 +50,9 @@ function ResourceRow({
         {/* Icon */}
 
         <div className="pt-1">
-          <Icon
-            size={24}
-            style={{
-              color: item.color,
-            }}
-          />
+          <span style={{ color: item.color }}>
+            <Icon name={item.icon} size={24} />
+          </span>
         </div>
 
         {/* Label */}
