@@ -7,7 +7,7 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 
-import { OverviewPage } from "@/features/overview/overview-page";
+import { OverviewSection } from "@/app/dashboard/overview-section";
 import { WarehouseOperationsPage } from "@/features/ware-house/warehouse-operations-page";
 
 export function DashboardTabs() {
@@ -47,7 +47,7 @@ export function DashboardTabs() {
       </TabsList>
 
       <TabsContent value="overview" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
-        <OverviewPage />
+        <OverviewSection />
       </TabsContent>
 
       <TabsContent value="warehouse" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
