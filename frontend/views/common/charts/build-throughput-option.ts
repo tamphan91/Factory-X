@@ -1,5 +1,5 @@
 import { processColor, targetColor } from "@/lib/chart-colors";
-import type { ChartOption } from "@/types/echarts";
+import type { EChartsOption } from "echarts";
 import type {
   ThroughputItemVM,
   ThroughputMode,
@@ -17,7 +17,7 @@ export const buildThroughputOption = ({
   mode,
   axisMax,
   unit,
-}: BuildThroughputOptionInput): ChartOption => {
+}: BuildThroughputOptionInput): EChartsOption => {
   const showTarget = mode === "target";
 
   return {

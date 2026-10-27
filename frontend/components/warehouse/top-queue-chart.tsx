@@ -2,10 +2,10 @@
 
 import { Card } from "@/views/common/ui/card";
 import { EChart } from "@/views/common/echart";
-import { ChartOption } from "@/types/echarts";
+import type { EChartsOption } from "echarts";
 
 export function TopQueueChart() {
-  const option: ChartOption = {
+  const option: EChartsOption = {
     tooltip: {
       trigger: "axis",
       axisPointer: {
