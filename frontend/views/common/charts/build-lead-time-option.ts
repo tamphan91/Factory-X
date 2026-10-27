@@ -25,6 +25,7 @@ export const buildLeadTimeOption = ({
       {
         name: line.label,
         type: "line",
+        symbol: "circle",
         symbolSize: SYMBOL_SIZE,
         lineStyle: { width: 2, color },
         itemStyle: { color },
@@ -35,6 +36,7 @@ export const buildLeadTimeOption = ({
       {
         name: `${line.label} (forecast)`,
         type: "line",
+        symbol: "circle",
         symbolSize: SYMBOL_SIZE,
         lineStyle: { width: 2, type: "dotted", color },
         itemStyle: { color },
