@@ -3,6 +3,7 @@ import type { LeadTimeSeries } from "@/models/types/lead-time";
 import { createOverviewMock } from "@/services/mock/overview.mock";
 import {
   LEAD_TIME_SLOT_COUNT,
+  forecastStartIndex,
   resolveLeadTimeSeries,
   timeLabels,
 } from "./lead-time";
@@ -77,5 +78,19 @@ describe("resolveLeadTimeSeries", () => {
     const [line] = resolveLeadTimeSeries("today", [long], createOverviewMock());
     expect(line.actual).toHaveLength(LEAD_TIME_SLOT_COUNT);
     expect(line.actualCount).toBe(LEAD_TIME_SLOT_COUNT);
+  });
+});
+
+describe("forecastStartIndex", () => {
+  it("is the last actual slot of the longest line", () => {
+    const overview = createOverviewMock();
+    const lines = resolveLeadTimeSeries("today", [receiving, putaway], overview);
+    expect(forecastStartIndex(lines)).toBe(overview.inbound.trend.length - 1);
+  });
+
+  it("is 0 without actual points", () => {
+    const lines = resolveLeadTimeSeries("week", [receiving], createOverviewMock());
+    expect(forecastStartIndex(lines)).toBe(0);
+    expect(forecastStartIndex([])).toBe(0);
   });
 });

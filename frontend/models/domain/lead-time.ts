@@ -69,3 +69,7 @@ export const resolveLeadTimeSeries = (
     const fromOverview = range === "today" ? overviewActual(item.process, overview) : [];
     return toLine(item, item.actual ?? fromOverview);
   });
+
+/** Slot where the forecast region begins: the last actual point of the longest line. */
+export const forecastStartIndex = (lines: LeadTimeLine[]): number =>
+  Math.max(0, ...lines.map((line) => line.actualCount - 1));
