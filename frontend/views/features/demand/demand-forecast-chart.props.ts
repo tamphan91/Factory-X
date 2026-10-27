@@ -12,6 +12,8 @@ export interface ForecastChartData {
   stagingCapacity: number[];
   /** Computed by `forecastAxisMax`. */
   axisMax: number;
+  /** Distance between y-axis ticks; `FORECAST_AXIS_STEP`. */
+  axisInterval: number;
   /** Days before the forecast region starts. */
   actualDays: number;
 }
