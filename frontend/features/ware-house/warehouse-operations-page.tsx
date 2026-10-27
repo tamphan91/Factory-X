@@ -5,25 +5,25 @@ import { TopQueueChart } from "@/components/warehouse/top-queue-chart";
 
 export function WarehouseOperationsPage() {
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-2">
 
       <WarehouseLayoutMap />
 
-      <div className="grid grid-cols-12 gap-4">
+     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-2">
 
-        <div className="col-span-3">
-          <ResourceStatusCard />
+        <div className="xl:col-span-3">
+            <ResourceStatusCard />
         </div>
 
-        <div className="col-span-5">
-          <ZonePerformanceTable />
+        <div className="xl:col-span-5">
+            <ZonePerformanceTable />
         </div>
 
-        <div className="col-span-4">
-          <TopQueueChart />
+        <div className="xl:col-span-4">
+            <TopQueueChart />
         </div>
 
-      </div>
+        </div>
 
     </div>
   );

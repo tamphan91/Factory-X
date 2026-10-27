@@ -15,13 +15,16 @@ export function DashboardTabs() {
     <Tabs
       defaultValue="overview"
       className="w-full gap-0 bg-[#081c4b] text-white"
+
     >
       <TabsList
         className="
+        !h-auto
         mx-4
         p-0
         justify-start
         rounded-none
+        flex-wrap
         bg-[#081c4b]
         "
       >
@@ -37,7 +40,7 @@ export function DashboardTabs() {
           Demand & Lead Time
         </TabsTrigger>
 
-        <TabsTrigger value="simulation" className="text-white hover:text-blue-400 rounded-b-none">
+        <TabsTrigger value="simulation" className="grow-0 text-white hover:text-blue-400 rounded-b-none">
           Simulation & Recommendation
         </TabsTrigger>
 

@@ -12,44 +12,42 @@ export function OverviewPage() {
     <div className="space-y-2">
 
       {/* KPI */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
 
-      <div className="grid grid-cols-12 gap-2">
-
-        <div className="col-span-4">
+        <div>
           <SupplyRateCard />
         </div>
 
-        <div className="col-span-4">
+        <div>
           <InboundLeadtimeCard />
         </div>
 
-        <div className="col-span-4">
+        <div>
           <PickingLeadtimeCard />
         </div>
 
-        <div className="col-span-4">
+        <div>
           <StagingCard />
         </div>
 
-        <div className="col-span-4">
+        <div>
           <WarehouseCard />
         </div>
 
-        <div className="col-span-4">
+        <div>
           <ThroughputSummaryCard />
         </div>
 
       </div>
 
       {/* Main Content */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-2">
 
-      <div className="grid grid-cols-12 gap-2">
-
-        <div className="col-span-5">
+        <div className="xl:col-span-5">
           <AlertsPanel />
         </div>
 
-        <div className="col-span-7">
+        <div className="xl:col-span-7">
           <ThroughputChart />
         </div>
 

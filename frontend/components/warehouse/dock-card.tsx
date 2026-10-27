@@ -45,7 +45,7 @@ export function DockCard({
             flex
             items-center
             gap-1
-            text-sm
+            text-xs
             mt-1
             "
           >
