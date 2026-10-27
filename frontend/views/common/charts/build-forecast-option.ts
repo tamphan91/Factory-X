@@ -18,7 +18,7 @@ export const buildForecastOption = ({
 }: ForecastChartData): EChartsOption => {
   const hasForecast = actualDays < labels.length;
   const region = hasForecast
-    ? buildForecastRegion({ fromIndex: actualDays - 0.5, toIndex: labels.length - 0.5 })
+    ? buildForecastRegion({ fromIndex: actualDays, toIndex: labels.length - 1 })
     : {};
 
   return {
