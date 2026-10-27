@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/views/common/ui/card";
 import type { KpiCardShellProps } from "./kpi-card-shell.props";
 
 export function KpiCardShell({ title, children }: KpiCardShellProps) {

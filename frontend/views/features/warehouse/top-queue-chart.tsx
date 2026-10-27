@@ -1,11 +1,11 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { EChart } from "@/components/charts/echart";
-import { ChartOption } from "@/types/echarts";
+import { Card } from "@/views/common/ui/card";
+import { EChart } from "@/views/common/echart";
+import type { EChartsOption } from "echarts";
 
 export function TopQueueChart() {
-  const option: ChartOption = {
+  const option: EChartsOption = {
     tooltip: {
       trigger: "axis",
       axisPointer: {

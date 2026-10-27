@@ -1,6 +1,6 @@
 "use client";
 
-import { EChart } from "@/components/charts/echart";
+import { EChart } from "@/views/common/echart";
 import { buildThroughputOption } from "@/views/common/charts/build-throughput-option";
 import { FilterSelect } from "@/views/common/filter-select";
 import type { FilterOption } from "@/views/common/filter-select.props";

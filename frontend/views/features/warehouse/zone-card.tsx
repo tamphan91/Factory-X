@@ -1,13 +1,6 @@
 "use client";
 
-interface ZoneCardProps {
-  name: string;
-  occupancy: number;
-  slots?: string;
-  color: string;
-  vehicle?: string;
-  alert?: boolean;
-}
+import type { ZoneCardProps } from "./zone-card.props";
 
 export function ZoneCard({
   name,

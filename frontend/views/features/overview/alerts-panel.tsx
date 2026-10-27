@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/views/common/ui/button";
 import { FilterSelect } from "@/views/common/filter-select";
 import type { FilterOption } from "@/views/common/filter-select.props";
 import { PanelCard } from "@/views/common/panel-card";

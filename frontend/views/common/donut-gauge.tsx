@@ -1,8 +1,8 @@
 "use client";
 
-import { EChart } from "@/components/charts/echart";
+import { EChart } from "@/views/common/echart";
 import { processColor, toneColor } from "@/lib/chart-colors";
-import type { ChartOption } from "@/types/echarts";
+import type { EChartsOption } from "echarts";
 import type { DonutGaugeProps } from "./donut-gauge.props";
 
 export function DonutGauge({ percent, appearance, height = 110 }: DonutGaugeProps) {
@@ -11,7 +11,7 @@ export function DonutGauge({ percent, appearance, height = 110 }: DonutGaugeProp
       ? toneColor(appearance.tone)
       : processColor(appearance.process);
 
-  const option: ChartOption = {
+  const option: EChartsOption = {
     series: [
       {
         type: "gauge",

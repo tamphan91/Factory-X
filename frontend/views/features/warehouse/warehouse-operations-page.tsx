@@ -1,7 +1,7 @@
-import { WarehouseLayoutMap } from "@/components/warehouse/warehouse-layout-map";
-import { ResourceStatusCard } from "@/components/warehouse/resource-status-card";
-import { ZonePerformanceTable } from "@/components/warehouse/zone-performance-table";
-import { TopQueueChart } from "@/components/warehouse/top-queue-chart";
+import { WarehouseLayoutMap } from "./warehouse-layout-map";
+import { ResourceStatusCard } from "./resource-status-card";
+import { ZonePerformanceTable } from "./zone-performance-table";
+import { TopQueueChart } from "./top-queue-chart";
 
 export function WarehouseOperationsPage() {
   return (

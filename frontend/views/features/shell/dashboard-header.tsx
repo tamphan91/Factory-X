@@ -6,7 +6,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
+} from "@/views/common/ui/select";
 import Image from "next/image";
 import LogoutButton from "./logout-button";
 
