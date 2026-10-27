@@ -1,5 +1,6 @@
-import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 import { cva } from "class-variance-authority";
+import { Icon } from "@/views/common/icon";
+import type { IconName } from "@/views/common/icon.props";
 import type { AlertItemProps } from "./alert-item.props";
 
 const rowVariants = cva("flex items-center rounded-md border-l-4 p-2", {
@@ -22,19 +23,17 @@ const badgeVariants = cva("flex h-9 w-9 items-center justify-center rounded-full
   },
 });
 
-const ICONS = {
-  critical: AlertCircle,
-  warning: AlertTriangle,
-  info: Info,
-} as const;
+const ICONS: Record<AlertItemProps["severity"], IconName> = {
+  critical: "alert-circle",
+  warning: "alert-triangle",
+  info: "info",
+};
 
 export function AlertItem({ severity, title, detail, time }: AlertItemProps) {
-  const Icon = ICONS[severity];
-
   return (
     <div className={rowVariants({ severity })}>
-      <div className={badgeVariants({ severity })}>
-        <Icon size={18} aria-label={severity} />
+      <div className={badgeVariants({ severity })} role="img" aria-label={severity}>
+        <Icon name={ICONS[severity]} size={18} />
       </div>
 
       <div className="ml-3 flex-1">

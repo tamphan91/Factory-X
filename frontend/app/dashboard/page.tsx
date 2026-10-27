@@ -4,6 +4,7 @@ import { DashboardFooter } from "@/views/features/shell/dashboard-footer";
 import { DashboardHeader } from "@/views/features/shell/dashboard-header";
 import { DashboardTabs } from "@/views/features/shell/dashboard-tabs";
 import { WarehouseOperationsPage } from "@/views/features/warehouse/warehouse-operations-page";
+import { DemandSection } from "./demand-section";
 import { OverviewSection } from "./overview-section";
 export const instant = false;
 
@@ -19,6 +20,7 @@ export default async function Page() {
             <DashboardTabs
                 overview={<OverviewSection />}
                 warehouse={<WarehouseOperationsPage />}
+                demand={<DemandSection />}
             />
             <DashboardFooter />
         </div>

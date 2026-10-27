@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Boxes } from "lucide-react";
+import { Icon } from "@/views/common/icon";
 
 export function PutawayPanel() {
     return (
@@ -31,7 +31,8 @@ export function PutawayPanel() {
                 Waiting Area
             </div>
 
-            <Boxes
+            <Icon
+                name="boxes"
                 size={42}
                 className="
                 mt-5

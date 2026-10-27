@@ -171,14 +171,14 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DonutGauge` | `percent`, `appearance: { tone } \| { process }`, `thick?` – `gauge-chart` | KPI cards | Implemented as `DonutGauge` (`views/common/donut-gauge.tsx`) – no `thick` prop yet |
 | `Sparkline` | `data[]`, `process: ProcessKey` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`views/common/sparkline.tsx`) – takes `process` |
 | `KpiCardShell` | `title`, `children` | KPI cards | Implemented as `KpiCardShell` (`views/common/kpi-card-shell.tsx`) – optional `title` |
-| `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Not implemented – `lucide-react` icons used directly (only in `AlertsPanel`) |
+| `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Implemented as `Icon` (`views/common/icon.tsx`) – the only file that holds SVG assets and imports `lucide-react` (enforced by ESLint `no-restricted-imports`); 6 product icons (valve, solenoid, sensor, gear, housing, egr) as inline SVG and 11 UI icons; the other names in this row are added when a component needs them |
 | `Legend` | `items: {color, label, dashed?}[]` | layout, queue, simulation | Not implemented |
 | `EmptyState` | message | alerts, tables | Not implemented |
 | `ErrorState` + `RetryButton` | error + `onRetry` | every data panel | Not implemented |
 | `LoadingState` | skeleton per panel | every data panel | Not implemented |
 | `DemoDataBadge` | shows "Simulation / Demo Data" when repository = mock | header | Not implemented – demo text is only in `DashboardFooter` |
 | `LastUpdated` | timestamp + relative age | header | Not implemented – date is hard-coded in `DashboardHeader` |
-| `SignalBars` | `level 1-4`, `tone` | demand list | Not implemented |
+| `SignalBars` | `level 1-4`, `tone`, `label` | demand list | Implemented as `SignalBars` (`views/common/signal-bars.tsx`) – lit bars take the tone colour, unlit bars a neutral token; `label` is the accessible text |
 | `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`views/common/echart.tsx`, props in `echart.props.ts`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/chart-theme.ts`) exists but is not applied |
 
 ### 2.2 Specialized Components (`views/features/*/`)
@@ -237,11 +237,11 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 | Component | Notes | Status |
 |---|---|---|
-| `ProductDemandPanel` | sort select, list, total | Not implemented |
-| `ProductDemandRow` | product icon, name, count, `SignalBars` | Not implemented |
-| `DemandTotal` | total + delta | Not implemented |
-| `DemandForecastChart` | bars + capacity step lines + forecast shading; range 7/14 | Not implemented |
-| `LeadTimeTrendChart` | 4 process lines, dotted forecast segment; range select | Not implemented |
+| `ProductDemandPanel` | sort select, list, total | Implemented as `ProductDemandPanel` (`views/features/demand/product-demand-panel.tsx`) – sort wired through `uiStore`; rows already sorted by the controller; empty state text |
+| `ProductDemandRow` | product icon, name, count, `SignalBars` | Implemented as `ProductDemandRow` (`views/features/demand/product-demand-row.tsx`) – signal level from `signalLevel`, colour from the product's `priority` through `productTone` |
+| `DemandTotal` | total + delta | Implemented as `DemandTotal` (`views/features/demand/demand-total.tsx`) – total computed from the rows; a rise is `bad` (`deltaTone(deltaPct, "down")`) |
+| `DemandForecastChart` | bars + capacity step lines + forecast shading; range 7/14 | Implemented as `DemandForecastChart` (`views/features/demand/demand-forecast-chart.tsx`) – option from `buildForecastOption`; the capacity lines come from the Overview totals (`capacityLines`, turns per day in `models/domain/capacity.ts`) |
+| `LeadTimeTrendChart` | 4 process lines, dotted forecast segment; range select | Implemented as `LeadTimeTrendChart` (`views/features/demand/lead-time-trend-chart.tsx`) – option from `buildLeadTimeOption`; for today the Receiving and Picking points come from the Overview snapshot (`resolveLeadTimeSeries`) |
 
 #### Simulation & Recommendation (`views/features/simulation/`)
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Truck } from "lucide-react";
+import { Icon } from "@/views/common/icon";
 import type { DockCardProps } from "./dock-card.props";
 
 export function DockCard({
@@ -19,7 +19,8 @@ export function DockCard({
     >
       <div className="flex gap-3">
 
-        <Truck
+        <Icon
+          name="truck"
           size={28}
           className="text-slate-200"
         />
