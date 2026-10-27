@@ -159,6 +159,11 @@
   --fx-process-putaway: #1fb46b;
   --fx-process-picking: #f59a23;
   --fx-process-delivery: #8b5cf6;
+
+  /* Series identity on the forecast chart; they do not judge a value. */
+  --fx-capacity-warehouse: #e5413e;
+  --fx-capacity-staging: #1fb46b;
+  --fx-forecast-shade: rgba(47, 124, 246, 0.08);
 }
 
 @theme inline {
