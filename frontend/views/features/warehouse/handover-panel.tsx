@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  Factory,
-  ArrowDown,
-  Building2,
-} from "lucide-react";
+import { Icon } from "@/views/common/icon";
 
 export function HandoverPanel() {
   return (
@@ -35,7 +31,8 @@ export function HandoverPanel() {
         (Material Delivery)
       </div>
 
-      <Building2
+      <Icon
+        name="building"
         size={42}
         className="text-slate-700"
       />
@@ -52,12 +49,14 @@ export function HandoverPanel() {
 
       </div>
 
-      <ArrowDown
+      <Icon
+        name="arrow-down"
         size={28}
         className="text-slate-500"
       />
 
-      <Factory
+      <Icon
+        name="factory"
         size={42}
         className="text-slate-700"
       />
