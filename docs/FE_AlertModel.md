@@ -29,7 +29,7 @@ Because the number is typed twice, a change in one place does not reach the othe
 
 ## 3. Model
 
-Types live in `types/alert.ts`. Business rules live in `domain/alert.ts`.
+Types live in `models/types/alert.ts`. Business rules live in `models/domain/alert.ts`.
 
 ```ts
 // severity maps one-to-one to the tones in FE-design.md §2.5
@@ -91,7 +91,7 @@ Changes against the screenshot, all from the shared rules (FE-design.md §2.5, d
 
 ### 3.2 Formatting is separate from data
 
-`formatAlertDetail(item: AlertItem): string` in `domain/alert.ts` builds the detail line from `facts` with a `switch (item.kind)`. A new kind is added in three places only: the `AlertKind` union, `AlertFacts`, and the formatter. TypeScript reports a missing case.
+`formatAlertDetail(item: AlertItem): string` in `models/domain/alert.ts` builds the detail line from `facts` with a `switch (item.kind)`. The `switch` ends with `default: return assertNever(item)`, where `assertNever(x: never): never` throws an `Error`. A new kind is added in three places only: the `AlertKind` union, `AlertFacts`, and the formatter. TypeScript reports the missing case at compile time, and the `default` covers bad data at runtime.
 
 ## 4. One source, many consumers
 
@@ -103,12 +103,12 @@ OverviewSnapshot (one fetch)
    alerts: Alert          ← from the backend, or raised by domain/alert.ts rules (mock mode)
         │
         ├──► AlertsPanel          (all items, filtered)
-        ├──► SupplyRateCard       (currentNotice ← AlertItem "material-delivery-delay")
+        ├──► SupplyRateCard       (currentNotice ← AlertItem "material-delivery-delay", built in the controller)
         └──► other consumers      (§6)
 ```
 
 * **One query.** `useOverviewSnapshot` fetches once. `useOverviewController` derives every view-model from that result (TanStack Query `select`). Both cards render the same snapshot and refresh together.
-* **One selector per consumer**, in `domain/alert.ts`:
+* **One selector per consumer**, in `models/domain/alert.ts`:
 
 ```ts
 selectAlerts(alert: Alert, filter: AlertSeverity | "all"): AlertItem[]
@@ -123,12 +123,14 @@ selectAlertByKind<K extends AlertKind>(alert: Alert, kind: K): AlertItem<K> | un
 On the KPI card, `currentNotice` is the secondary number with its label ("8 Overdue"; see FE_GaugeKpiCard.md §3.1). For the supply card it comes straight from the alert item:
 
 ```ts
-// domain/alert.ts
-export const noticeFromAlert = <K extends AlertKind>(
-  item: AlertItem<K> | undefined,
-  pick: (facts: AlertFacts[K]) => number,
-  label: string,
-): CurrentNotice =>
+// models/domain/alert.ts – one options object instead of three loose parameters
+type NoticeOptions<K extends AlertKind> = {
+  item: AlertItem<K> | undefined;
+  pick: (facts: AlertFacts[K]) => number;
+  label: string;
+};
+
+export const noticeFromAlert = <K extends AlertKind>({ item, pick, label }: NoticeOptions<K>): CurrentNotice =>
   item
     ? { value: pick(item.facts), label, tone: severityTone(item.severity) }
     : { value: 0, label, tone: "good" };          // no alert means nothing overdue
@@ -137,13 +139,17 @@ const severityTone = (s: AlertSeverity): Tone =>
   s === "critical" ? "critical" : s === "warning" ? "warning" : "info";
 ```
 
-```tsx
-// SupplyRateCard (wrapper, FE_GaugeKpiCard.md §3.4)
-const notice = noticeFromAlert(overdueAlert, f => f.overdueRequests, "Overdue");
+```ts
+// controllers/overview.vm.ts (FE_GaugeKpiCard.md §3.4) – the view never calls domain functions
+const currentNotice = noticeFromAlert({
+  item: selectAlertByKind(alerts, "material-delivery-delay"),
+  pick: (facts) => facts.overdueRequests,
+  label: "Overdue",
+});
 ```
 
 * The notice value is `facts.overdueRequests`, the notice colour is the alert's severity. A critical alert gives a red number; no alert gives "0 Overdue" in the good tone.
-* The wrapper receives the `AlertItem` as a prop (`overdueAlert`) and no longer receives a loose `overdue` number.
+* The controller builds `currentNotice` and passes it to `SupplyRateCard` as part of its props. The card receives no `AlertItem` and no loose `overdue` number.
 * The alert panel row and the card notice show the same value and the same tone, by construction.
 
 ## 6. Applying the model to the other alerts
@@ -203,11 +209,11 @@ type AlertsPanelProps = {
 
 ## 9. Change list
 
-1. Add `types/alert.ts` (`AlertSeverity`, `AlertKind`, `AlertFacts`, `AlertItem`, `Alert`).
-2. Add `domain/alert.ts`: `formatAlertDetail`, `selectAlerts`, `selectAlertByKind`, `noticeFromAlert`, `deriveAlerts`.
+1. Add `models/types/alert.ts` (`AlertSeverity`, `AlertKind`, `AlertFacts`, `AlertItem`, `Alert`).
+2. Add `models/domain/alert.ts`: `formatAlertDetail`, `selectAlerts`, `selectAlertByKind`, `noticeFromAlert`, `deriveAlerts`.
 3. Add the alert fields to the overview repository and mapper; add the mock data from §3.1.
-4. Extract `AlertItem` as a component; make `AlertsPanel` take `AlertsPanelProps`; style rows by severity; wire the filter and add Info.
-5. Change `SupplyRateCard` to receive `overdueAlert` and call `noticeFromAlert` (FE_GaugeKpiCard.md §3.4).
+4. Extract `AlertItem` as a component in `views/features/overview/`; make `AlertsPanel` take `AlertsPanelProps` (in `alerts-panel.props.ts`); style rows by severity; wire the filter and add Info.
+5. Call `noticeFromAlert` in the controller builder and pass `currentNotice` to `SupplyRateCard` (FE_GaugeKpiCard.md §3.4).
 6. Drive both cards from `useOverviewController` using one `useOverviewSnapshot` query.
 7. Update the Status column in FE-design.md §2.2 when done.
 

@@ -53,7 +53,7 @@ This design is based on the prototype `tmp/FactoryX_AI-Powered Logistics Control
 
 | Layer | Owns | Must NOT |
 |---|---|---|
-| **View** | JSX, Tailwind classes, ECharts option building from view-model, a11y | fetch, compute KPIs, read stores directly (except via a controller hook) |
+| **View** | JSX, Tailwind classes, ECharts option building from view-model, a11y | fetch, compute KPIs, percents, tones or thresholds, read stores (everything arrives through props) |
 | **Control** | `useXxxController()` hooks: subscribe to stores/queries, expose `{ vm, actions }`; debounce, optimistic updates, error toasts | contain domain formulas, JSX |
 | **Model** | `models/types/` (domain entities), `models/domain/` (pure rules), `models/stores/` (Zustand slices) | import React UI, call HTTP |
 | **Service** | `apiClient`, repositories, DTO mappers, WebSocket client, auth token handling | hold UI state, know about components |
@@ -79,7 +79,8 @@ frontend/
 │
 ├─ views/                        # VIEW: dumb React components
 │  ├─ common/                    # ALL shared components together (§2.1)
-│  │  ├─ ui/                     # shadcn primitives (own props, as generated)
+│  │  ├─ ui/                     # shadcn primitives (own props, as generated; no .props.ts)
+│  │  ├─ charts/                 # ECharts option builders: buildThroughputOption, buildForecastOption, …
 │  │  ├─ echart.tsx              echart.props.ts
 │  │  ├─ sparkline.tsx           sparkline.props.ts
 │  │  ├─ donut-gauge.tsx         donut-gauge.props.ts
@@ -120,7 +121,7 @@ frontend/
 │  ├─ mappers/       # DTO → domain
 │  └─ mock/          # seeded demo data (port of BASE_DATA/getData)
 ├─ hooks/                        # generic hooks (useInterval, useEventSource)
-└─ lib/                          # utils, constants, chart theme
+└─ lib/                          # utils, constants, chart-theme.ts, chart-colors.ts (toneColor, processColor)
 ```
 
 Import direction: `app → views, controllers`; `controllers → models, services, view props types`; `views → views/common, props files, models/domain/tone` (tone class lookup only); `models` imports nothing above it.
@@ -165,10 +166,10 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `PanelHeader` | `title`, `subtitle`, `actions` slot | PanelCard | Not implemented – header row is inlined in each panel |
 | `FilterSelect` | `label?`, `options`, `value`, `onChange` – labelled `Select` with the prototype's `dd` look | all dropdowns | Not implemented – `Select` is inlined in `DashboardHeader`, `AlertsPanel`, `ThroughputChart` |
 | `StatusDot` | `status: "ok"\|"warn"\|"critical"\|"info"` | docks, table status, legends | Not implemented – header uses a "●" text character |
-| `DeltaIndicator` | `value: string`, `upIsGood: boolean`, `caption?` – ↑/↓ coloured | KPI cards, resources, totals | Not implemented – delta markup is duplicated inside each KPI card |
-| `ProgressBar` | `percent`, `tone`, `height` – `.track/.fill` | throughput, resources | Not implemented – inlined in `ThroughputSummaryCard` |
-| `DonutGauge` | `percent`, `tone`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (currently `components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no tone |
-| `Sparkline` | `data[]`, `color` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) |
+| `DeltaIndicator` | `text: string`, `tone: Tone`, `caption?` – ↑/↓ coloured; the tone comes from `deltaTone` in the controller | KPI cards, resources, totals | Not implemented – delta markup is duplicated inside each KPI card |
+| `ProgressBar` | `percent`, `appearance: { tone } \| { process }`, `height` – `.track/.fill` | throughput, resources | Not implemented – inlined in `ThroughputSummaryCard` |
+| `DonutGauge` | `percent`, `appearance: { tone } \| { process }`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (currently `components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no `appearance` |
+| `Sparkline` | `data[]`, `process: ProcessKey` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) |
 | `KpiCardShell` | `title`, `children` | KPI cards | Partial as `KpiCardShell` (`components/dashboard/kpi-card-shell.tsx`) – fixed height, `children` only, no `title` prop |
 | `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Not implemented – `lucide-react` icons used directly (only in `AlertsPanel`) |
 | `Legend` | `items: {color, label, dashed?}[]` | layout, queue, simulation | Not implemented |
@@ -178,7 +179,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DemoDataBadge` | shows "Simulation / Demo Data" when repository = mock | header | Not implemented – demo text is only in `DashboardFooter` |
 | `LastUpdated` | timestamp + relative age | header | Not implemented – date is hard-coded in `DashboardHeader` |
 | `SignalBars` | `level 1-4`, `tone` | demand list | Not implemented |
-| `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`components/charts/echart.tsx`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/echar-theme.ts`) exists but is not applied |
+| `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`components/charts/echart.tsx`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/chart-theme.ts`) exists but is not applied |
 
 ### 2.2 Specialized Components (`views/features/*/`)
 
@@ -259,9 +260,12 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 Every specialized component receives a **view-model** (display-ready values: formatted strings, tone enums, percentages), never raw DTOs. View-models are built in `controllers/*.vm.ts` by calling `models/domain/` functions; the props type of each component lives beside it in `<component>.props.ts` (§1.3). Example:
 
 ```ts
-// controllers/overview.vm.ts
-export type SupplyRateVM = { delivered: number; total: number; delta: string;
-                             overdueAlert?: AlertItem<"material-delivery-delay"> };   // percent and tones are derived in the card (FE_GaugeKpiCard.md, FE_AlertModel.md)
+// views/common/gauge-kpi-card.props.ts – the props type is the view-model; controllers import it
+export type GaugeKpiBaseProps = { title: string; currentStats: { current: number; total: number };
+                                  percent: number; ringTone: Tone; /* … */ };   // see FE_GaugeKpiCard.md
+
+// controllers/overview.vm.ts – builder function only; it calls models/domain/ for percent and tones
+export const buildSupplyRateVM = (snapshot: OverviewSnapshot): SupplyRateCardProps => { /* … */ };
 ```
 
 #### 2.3.1 One data set, two presentations: `ThroughputCard`
@@ -289,14 +293,17 @@ export const PROCESS_COLOR: Record<ProcessKey, string> = {
   picking: "var(--fx-process-picking)", delivery: "var(--fx-process-delivery)",
 };
 
-// controllers/overview.vm.ts
+// models/types/throughput.ts – domain entity
 export type ThroughputItem = { process: ProcessKey; label: string; actual: number; target?: number };
 
-type ThroughputCardBase = { items: ThroughputItem[]; unit?: string };      // identical for both
+// views/features/overview/throughput-card.props.ts – props type, beside the component
+export type ThroughputItemVM = ThroughputItem & { barPercent: number };    // barPercent computed in the controller
+type ThroughputCardBase = { items: ThroughputItemVM[]; unit?: string };    // identical for both
 
 export type ThroughputCardProps =
   | (ThroughputCardBase & { orientation: "horizontal"; periodLabel?: string })
   | (ThroughputCardBase & { orientation: "vertical"; mode: "actual" | "target";
+                            axisMax: number;                             // computed in the controller
                             onModeChange: (m: "actual" | "target") => void });
 ```
 
@@ -370,7 +377,7 @@ body { background: radial-gradient(1400px 700px at 50% -15%, var(--fx-bg-glow) 0
 |---|---|---|
 | Font | `app/layout.tsx` via `next/font/google` (Barlow Semi Condensed 400–700) | replaces the `<link>` in the prototype |
 | Colour tokens | `globals.css` (above) | status → colour mapping lives in **one** place: `domain/tone.ts` (`Tone` → CSS var class) |
-| Chart theme | `lib/echar-theme.ts` (existing) reads the same tokens; one palette for all charts | |
+| Chart theme | `lib/chart-theme.ts` (existing) reads the same tokens; one palette for all charts. ECharts needs real colour strings, so option builders call `toneColor(tone)` / `processColor(key)` from `lib/chart-colors.ts`, never hex | |
 | Component variants | `class-variance-authority` in each common component (`tone`, `size`) | no ad-hoc class strings in features |
 | Layout | `PageGrid` helper = 12-col grid with `gap-2`; page max-width 1920 px, padding `px-3` | |
 | Responsive | breakpoints from prototype: ≤1500 px KPI row → 3 cols; ≤900 px single column | |
@@ -411,13 +418,13 @@ data (Model) ──► rule (domain/tone.ts, thresholds.ts) ──► Tone ─�
 |---|---|---|
 | Alarm / warning from occupancy and queue time | `zoneTone(occupancy, leadMin)`, `zoneStatus(...)` – built on `OCCUPANCY_RULE` | occupancy ≥ 90 % → `critical`; 75–89 % or lead time ≥ 25 min → `warning`; below 75 % → `good` |
 | Layout tile bar colour | `layoutTone(occupancy, leadMin)` – same function as `zoneTone` | same tone as the zone status; alert dot when the tone is `critical` (≥ 90 %) |
-| Negative change vs. yesterday | `deltaTone(delta, upIsGood)` | lead time ↑ → `bad`, throughput ↑ → `good` |
+| Negative change vs. yesterday | `deltaTone(deltaPct, goodDirection)` | lead time ↑ → `bad`, throughput ↑ → `good` |
 | Target not met | `targetTone(value, target, direction)` | picking 28 min vs. target ≤ 30 min → `good`; 32 min → `bad` |
-| Late deadline (one item) | `deadlineTone(dueAt, now, doneAt?)` | a single request or vehicle task past its due time → `late`; due within the warning window → `warning` |
+| Late deadline (one item) | `deadlineTone({ dueAt, now, doneAt? })` | a single request or vehicle task past its due time → `late`; due within the warning window → `warning` |
 | Ring / percentage KPI (supply on-time, staging, warehouse) | `thresholdRule({ direction, goodAt, warningAt })` – one abstract function, thresholds per card in `domain/thresholds.ts` | on-time 96 % → `warning`; warehouse 68 % → `good`; 8 overdue → `critical` (see [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)) |
 | Alert severity | `alertTone(severity)` | `critical` / `warning` / `info` → matching tone and icon; the same `AlertItem` also colours KPI notices ([FE_AlertModel.md](FE_AlertModel.md)) |
 | Table cell highlight | `cellTone(column, value)` | queue ≥ 8 or lead time ≥ 28 min → `bad` |
-| Missing or stale data | `dataTone(value, fetchedAt, maxAge)` | `null`, error or older than 2 × refresh interval → `unavailable` |
+| Missing or stale data | `dataTone({ value, fetchedAt, maxAge })` | `null`, error or older than 2 × refresh interval → `unavailable` |
 | Resource problem | `resourceTone(resource)` | AGV offline / battery low → `warning` |
 
 **Decided thresholds** (defined once in `domain/thresholds.ts`, used by cards, tiles, tables and alerts):
@@ -435,13 +442,25 @@ Delta colours: a rising occupancy is `bad` (red); there is no neutral band. The 
 // domain/tone.ts
 export type Tone = "good" | "info" | "warning" | "critical" | "bad" | "late" | "unavailable" | "neutral";
 
-export const deltaTone = (delta: string, upIsGood: boolean): Tone => {
-  const n = parseFloat(delta);
-  return !n ? "neutral" : (n > 0) === upIsGood ? "good" : "bad";
+export type GoodDirection = "up" | "down";
+
+// deltaPct is a number; the display string ("+2%") is made by format.ts, never parsed back
+export const deltaTone = (deltaPct: number | null, goodDirection: GoodDirection): Tone => {
+  if (deltaPct == null || Number.isNaN(deltaPct)) {
+    return "unavailable";
+  }
+  if (deltaPct === 0) {
+    return "neutral";
+  }
+  return (deltaPct > 0) === (goodDirection === "up") ? "good" : "bad";
 };
 
-export const targetTone = (v: number | null, target: number, dir: "max" | "min"): Tone =>
-  v == null ? "unavailable" : (dir === "max" ? v <= target : v >= target) ? "good" : "bad";
+export const targetTone = (v: number | null, target: number, dir: "max" | "min"): Tone => {
+  if (v == null) {
+    return "unavailable";
+  }
+  return (dir === "max" ? v <= target : v >= target) ? "good" : "bad";
+};
 ```
 
 When several rules apply to the same element, take the **most severe** tone: `critical` > `late` > `bad` > `warning` > `info` > `good` > `neutral`; `unavailable` overrides all, because a judgement on missing data is not trustworthy. A helper `worstTone(...tones)` in `domain/tone.ts` does this.
@@ -450,7 +469,7 @@ When several rules apply to the same element, take the **most severe** tone: `cr
 
 | Element | Change when tone changes |
 |---|---|
-| `DeltaIndicator`, KPI value | text colour and arrow from `deltaTone(delta, upIsGood)` (e.g. "-12%", "+15%"); `unavailable` shows "–" and hides the delta |
+| `DeltaIndicator`, KPI value | text colour and arrow from the `tone` prop, computed by `deltaTone(deltaPct, goodDirection)` in the controller (e.g. "-12%", "+15%"); `unavailable` shows "–" and hides the delta |
 | `Sparkline` | **not tone-driven**: the line and fill always use the process colour (`PROCESS_COLOR`, §2.3.1). Empty data shows no line and "No data" |
 | `DonutGauge`, `ProgressBar` | fill colour from `tone`; `unavailable` shows an empty ring / track |
 | `ZoneTile`, `ResourceRow` | bar colour, border and alert dot (`critical`, `late`) |
@@ -482,7 +501,7 @@ Controllers are custom hooks in `controllers/`. Views call **actions**; actions 
 | A2 | `setViewMode(mode)` | `ViewModeToggle` click (header **and** layout panel share it) | write to store; layout re-renders (no refetch) | `filtersStore.viewMode` |
 | A3 | `setLocalFilter(key, value)` | local select/segment change (alert level, throughput mode, area, queue top-N, demand sort, forecast range, lead range, rec sort, resource group) | write to the feature's slice of `uiStore`; derive VM with domain selector | `uiStore.<feature>.<key>` |
 | A4 | `toggleSort(column)` | click / Enter / Space on sortable header | cycles asc → desc; sorted with `domain/sort.ts` | `uiStore.zoneTable.sort` |
-| A5 | `selectItem(id)` / `openDetails(id)` | click alert, "View All ›", "View Details ›" | open `Dialog`/`Sheet` or toggle inline detail | `uiStore.detail` |
+| A5 | `selectItem(id)` / `openDetails(id)` | click alert, "View All ›", "View Details ›" | open `Dialog`/`Sheet` or toggle inline detail | controller-local `useState` (use `uiStore` only if two components share the selection) |
 | A6 | `runSimulation(scenarioId)` | Run Simulation click | `useMutation` → `simulationRepo.run`; disable button while pending; toast on error; store result | mutation + `simulationStore.selected` |
 | A7 | `refresh()` | Refresh button, tab re-focus, auto-timer | `queryClient.invalidateQueries` for the active page; update `LastUpdated` | query cache |
 | A8 | `toggleAutoRefresh()` | Live indicator pause/resume | start/stop the interval (default 5 min) | `uiStore.autoRefresh` |
@@ -521,7 +540,9 @@ const { vm, status, actions } = useWarehouseController();
 
 ```ts
 reorderTabs(activeId, overId) {
-  if (activeId === overId) return;
+  if (activeId === overId) {
+    return;
+  }
   layoutStore.setTabOrder(arrayMove(order, order.indexOf(activeId), order.indexOf(overId)));
 }
 ```
@@ -560,7 +581,7 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 | `sortProducts(list, mode)` | `renderDemand` |
 | `isBetter(metric, base, value)` | `renderSim` |
 | `sortRecommendations(list, mode)` | `renderRecs` |
-| `deltaTone(delta, upIsGood)` | `deltaSpan` |
+| `deltaTone(deltaPct, goodDirection)` | `deltaSpan` |
 | `thresholdRule(options)`, `percentOf(current, total)` | ring KPIs ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)) |
 | `noticeFromAlert`, `deriveAlerts`, `formatAlertDetail` | alerts ([FE_AlertModel.md](FE_AlertModel.md)) |
 | `barPercent`, `axisMax` | throughput ([FE_ThroughputCard.md](FE_ThroughputCard.md)) |
@@ -575,7 +596,7 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 | UI/global state | Zustand (`filtersStore`, `uiStore`, `layoutStore`, `sessionStore`) | time range, view mode, sort, tab order, user |
 | Ephemeral component state | `useState` | dialog open, hover |
 
-**New dependencies to add:** `@tanstack/react-query`, `zustand`, `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `sonner` (toasts), `vitest` + `@testing-library/react` (tests).
+**New dependencies to add:** `@tanstack/react-query`, `zustand`, `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`, `sonner` (toasts), `vitest` + `@testing-library/react` + `@testing-library/jest-dom` + `jsdom` (tests).
 
 ---
 
@@ -586,4 +607,6 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into `LeadTimeKpiCard` ([FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md)) and the three ring cards into `GaugeKpiCard` ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)); merge `throughput-summary-card` / `throughput-chart` into `ThroughputCard` ([FE_ThroughputCard.md](FE_ThroughputCard.md)).
 4. Replace hard-coded colours (`#081c4b`, etc.) with the tokens in §2.4.
 5. Convert the single-page tab view to route segments (`/overview`, `/warehouse`, …) so URLs are shareable, matching the prototype's hash routes.
-6. The prototype uses Plotly; the project uses ECharts – port chart options once into `views/common/` chart option builders (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.
+6. The prototype uses Plotly; the project uses ECharts – port chart options once into chart option builders in `views/common/charts/` (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.
+7. Build `models/domain/tone.ts` and `models/domain/process.ts` (with the `--fx-process-*` tokens and `lib/chart-colors.ts`) first. Every card depends on them.
+8. The "Status" columns in §2.2 describe today's `components/`, `features/` and `types/` folders. New code goes in the layout of §1.3.

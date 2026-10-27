@@ -38,7 +38,7 @@ ThroughputCard(props)                       ← one entry function
        PanelCard · title + mode FilterSelect · EChart columns (actual, optional target)
 ```
 
-Location: `components/overview/throughput-card.tsx`, with the two cards as sibling files private to it.
+Location: `views/features/overview/throughput-card.tsx` and `throughput-card.props.ts`, with the two cards as sibling files private to it. `ThroughputItem` is a domain entity in `models/types/throughput.ts`; the controller builds the view-model items and `axisMax` (§5).
 
 ### 3.1 Props
 
@@ -46,7 +46,7 @@ Location: `components/overview/throughput-card.tsx`, with the two cards as sibli
 // domain/process.ts
 export type ProcessKey = "inbound" | "putaway" | "picking" | "delivery";
 
-// features/overview/overview.vm.ts
+// models/types/throughput.ts
 export type ThroughputItem = {
   process: ProcessKey;     // decides the colour
   label: string;           // "Picking / Kitting"
@@ -54,9 +54,12 @@ export type ThroughputItem = {
   target?: number;         // pallets; used by the vertical card only
 };
 
+// views/features/overview/throughput-card.props.ts
+export type ThroughputItemVM = ThroughputItem & { barPercent: number };   // computed in the controller
+
 type ThroughputCardBase = {
-  items: ThroughputItem[]; // the SAME array for both cards
-  unit?: string;           // default "pallets"
+  items: ThroughputItemVM[]; // the SAME array for both cards
+  unit?: string;             // default "pallets"
 };
 
 export type ThroughputCardProps =
@@ -67,6 +70,7 @@ export type ThroughputCardProps =
   | (ThroughputCardBase & {
       orientation: "vertical";
       mode: "actual" | "target";                    // dropdown: Actual | Actual vs Target
+      axisMax: number;                              // computed in the controller
       onModeChange: (m: "actual" | "target") => void;
     });
 ```
@@ -109,26 +113,33 @@ const { throughput, throughputMode, setThroughputMode } = useOverviewController(
 ## 4. Colour rules
 
 * Process colours are **identity colours**: inbound = blue, put-away = green, picking = orange, delivery = purple. They say which process, not good or bad.
-* They are defined once as `--fx-process-*` tokens (FE-design.md §2.4) and read through `PROCESS_COLOR[item.process]` in `domain/process.ts`. Neither card contains a hex value.
+* They are defined once as `--fx-process-*` tokens (FE-design.md §2.4) and read through `PROCESS_COLOR[item.process]` in `models/domain/process.ts`. Neither card contains a hex value.
 * Both cards use the **same** colour for the same process. This also removes the `#3b82f6` / `#3478f6` mismatch.
 * Target values use a neutral light grey, never a process colour.
 * Bars and columns are never tone-coloured (no red or green by value). Value labels use normal ink.
-* For ECharts, a `processColor(key)` helper returns the resolved CSS-variable value, because ECharts needs a real colour string.
+* For ECharts, `processColor(key)` in `lib/chart-colors.ts` returns the resolved CSS-variable value, because ECharts needs a real colour string. `PROCESS_COLOR` stays as `var(--…)` strings for CSS.
 
 ## 5. Calculated values (no hard-coded numbers)
 
-Business logic lives in `domain/throughput.ts`, tested without React:
+Business logic lives in `models/domain/throughput.ts`, tested without React. The **controller** calls it and passes the results as props (`barPercent` on each item, `axisMax` on the vertical card); the cards do not compute them.
 
 ```ts
-// bar width in the horizontal card; same scale as the prototype (max × 1.12). Actual only.
-export const barPercent = (value: number, items: ThroughputItem[]) => {
-  const max = Math.max(...items.map(i => i.actual)) * 1.12;
+// models/domain/throughput.ts – scales are named constants, kept with the other config
+export const BAR_HEADROOM = 1.12;    // horizontal card: same scale as the prototype
+export const AXIS_HEADROOM = 1.18;   // vertical card
+const EMPTY_AXIS_MAX = 10;           // all values 0: avoids a 0–0 axis
+
+// bar width in the horizontal card. Actual only.
+export const barPercent = (value: number, items: ThroughputItem[]): number => {
+  const max = Math.max(...items.map((item) => item.actual)) * BAR_HEADROOM;
   return max ? Math.min(100, (value / max) * 100) : 0;
 };
 
-// y-axis max in the vertical card (max × 1.18); includes target when it is drawn
-export const axisMax = (items: ThroughputItem[], withTarget: boolean) =>
-  Math.max(...items.flatMap(i => [i.actual, withTarget ? i.target ?? 0 : 0])) * 1.18;
+// y-axis max in the vertical card; includes target when it is drawn
+export const axisMax = (items: ThroughputItem[], withTarget: boolean): number => {
+  const max = Math.max(...items.flatMap((item) => [item.actual, withTarget ? item.target ?? 0 : 0]));
+  return max ? max * AXIS_HEADROOM : EMPTY_AXIS_MAX;
+};
 ```
 
 These replace the hand-typed `percent` field in the horizontal card and the fixed y-axis in the vertical one.
@@ -139,9 +150,9 @@ These replace the hand-typed `percent` field in the horizontal card and the fixe
 |---|---|---|
 | `PanelCard` (planned) | common parent card, header slot | create; until then `Card` + the header row copied from the current cards |
 | `FilterSelect` (planned) | mode dropdown (vertical card only) | create; until then the existing `Select` |
-| `ProgressBar` (planned) | one bar per process in the horizontal card | create; takes `percent`, `color`, `height` |
+| `ProgressBar` (planned) | one bar per process in the horizontal card | create; takes `percent`, `appearance` (`{ process }` here), `height` |
 | `EChart` | renders the vertical chart | none |
-| `buildThroughputOption(items, mode)` | builds the ECharts option, new, in `components/charts/builders/` | create; keeps option code out of the card |
+| `buildThroughputOption({ items, mode, axisMax })` | builds the ECharts option, new, in `views/common/charts/`; colours via `processColor` | create; keeps option code out of the card |
 
 ## 7. Data flow (target)
 
@@ -169,10 +180,10 @@ overview repository (throughput per process, today's actual; target for the char
 
 ## 9. Change list
 
-1. Add `domain/process.ts` (`ProcessKey`, `PROCESS_COLOR`) and the `--fx-process-*` tokens in `app/globals.css`.
-2. Add `domain/throughput.ts` (`barPercent`, `axisMax`).
-3. Add `components/overview/throughput-card.tsx` with `ThroughputHorizontalCard`, `ThroughputVerticalCard` and `buildThroughputOption`.
-4. In `features/overview/overview-page.tsx`, render `ThroughputCard` twice (`orientation="horizontal"` and `"vertical"`) with one shared `items` array.
+1. Add `models/domain/process.ts` (`ProcessKey`, `PROCESS_COLOR`), the `--fx-process-*` tokens in `app/globals.css`, and `lib/chart-colors.ts` (`processColor`).
+2. Add `models/domain/throughput.ts` (`barPercent`, `axisMax`) and `models/types/throughput.ts`.
+3. Add `views/features/overview/throughput-card.tsx` and `throughput-card.props.ts` with `ThroughputHorizontalCard` and `ThroughputVerticalCard`, and `buildThroughputOption` in `views/common/charts/`.
+4. In `overview-page.tsx`, render `ThroughputCard` twice (`orientation="horizontal"` and `"vertical"`) with one shared `items` array.
 5. Wire the vertical card's dropdown (`mode` / `onModeChange`) and change its second option from "Target" to "Actual vs Target".
 6. Delete `throughput-summary-card.tsx` and `throughput-chart.tsx`.
 7. Update the Status column in FE-design.md §2.2 when done.

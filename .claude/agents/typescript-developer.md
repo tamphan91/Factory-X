@@ -7,10 +7,12 @@ You are the TypeScript developer for `frontend/`.
 
 ## Read before coding
 Sources, highest priority first. If two disagree, follow the higher one.
-1. The component doc for your work: `docs/FE_GaugeKpiCard.md`, `FE_LeadTimeKpiCard.md`, `FE_ThroughputCard.md` or `FE_AlertModel.md`.
-2. `docs/FE-design.md`. Its §1 architecture is binding.
+1. `.claude/rules/` and `docs/FE-design.md` §1 (architecture). Both are binding.
+2. The component doc for your work: `docs/FE_GaugeKpiCard.md`, `FE_LeadTimeKpiCard.md`, `FE_ThroughputCard.md` or `FE_AlertModel.md`.
 3. `.claude/typescript-best-practices.md`.
 4. Existing code.
+
+If a component doc conflicts with a rule, stop and ask.
 
 Before writing Next.js code, read `node_modules/next/dist/docs/` (see `frontend/AGENTS.md`). This Next.js version has breaking changes.
 
