@@ -82,6 +82,7 @@ frontend/
 │  └─ shell/                     # header, tabs, auth controls
 ├─ domain/                       # Model: pure business logic
 │  ├─ kpi.ts  zone.ts  alert.ts  forecast.ts  simulation.ts  format.ts
+│  ├─ tone.ts  thresholds.ts  process.ts  throughput.ts
 ├─ types/                        # Model: entity + DTO types
 ├─ stores/                       # Model: Zustand (ui, filters, tabs, session)
 ├─ services/                     # Service layer
@@ -129,7 +130,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 | Component | Props (summary) | Used by | Status |
 |---|---|---|---|
-| `PanelCard` | `title`, `subtitle?`, `actions?`, `tone: "light"\|"dark"`, `children` – replaces repeated `.card`/`.dark` + `.hrow` header | every panel | Not implemented – each panel repeats `Card` + classes (e.g. `AlertsPanel`, `ThroughputChart`) |
+| `PanelCard` | `title`, `subtitle?`, `actions?`, `tone: "light"\|"dark"`, `children` – replaces repeated `.card`/`.dark` + `.hrow` header. `KpiCardShell` is its fixed-height KPI form: the KPI cards (gauge, lead-time, horizontal throughput) sit on it, the larger panels on `PanelCard` | every panel | Not implemented – each panel repeats `Card` + classes (e.g. `AlertsPanel`, `ThroughputChart`) |
 | `PanelHeader` | `title`, `subtitle`, `actions` slot | PanelCard | Not implemented – header row is inlined in each panel |
 | `FilterSelect` | `label?`, `options`, `value`, `onChange` – labelled `Select` with the prototype's `dd` look | all dropdowns | Not implemented – `Select` is inlined in `DashboardHeader`, `AlertsPanel`, `ThroughputChart` |
 | `StatusDot` | `status: "ok"\|"warn"\|"critical"\|"info"` | docks, table status, legends | Not implemented – header uses a "●" text character |
@@ -176,9 +177,9 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component**; design notes in [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
 | `StagingCard` / `WarehouseCard` | thin wrappers on the same shared `GaugeKpiCard` as `SupplyRateCard`, each with its own tone rule; design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; shared `GaugeKpiCard` not created |
 | `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars; not yet sharing props, colours or parent card with `ThroughputChart` |
-| `AlertsPanel` | filter select + View All | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
-| `AlertItem` | icon by severity, title, detail, time | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
 | `ThroughputCard` (`orientation="vertical"`) | column chart per process, actual and target, with Actual / Actual vs Target dropdown (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputChart` (`components/overview/throughput-chart.tsx`) – static bars; mode select not wired, no target series; own copy of the colours |
+| `AlertsPanel` | filter select + View All; reads the shared `Alert` model ([FE_AlertModel.md](FE_AlertModel.md)) | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
+| `AlertItem` | icon by severity, title, detail, time; one `AlertItem` of the shared `Alert` model, also the source of the supply card's overdue notice ([FE_AlertModel.md](FE_AlertModel.md)) | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
 
 #### Warehouse Operations (`features/warehouse/`)
 
@@ -228,7 +229,8 @@ Every specialized component receives a **view-model** (display-ready values: for
 
 ```ts
 // features/overview/overview.vm.ts
-export type SupplyRateVM = { percent: number; tone: Tone; delivered: string; overdue: number; delta: DeltaVM };
+export type SupplyRateVM = { delivered: number; total: number; delta: string;
+                             overdueAlert?: AlertItem<"material-delivery-delay"> };   // percent and tones are derived in the card (FE_GaugeKpiCard.md, FE_AlertModel.md)
 ```
 
 #### 2.3.1 One data set, two presentations: `ThroughputCard`
@@ -366,7 +368,7 @@ data (Model) ──► rule (domain/tone.ts, thresholds.ts) ──► Tone ─�
 | `warning` | approaching a limit | `--fx-caution` / `--fx-warning` | occupancy 75–89 %, queue growing |
 | `critical` | alarm, action needed | `--fx-danger` | occupancy ≥ 90 %, critical alert, offline resource |
 | `bad` | negative result (not an alarm) | `--fx-danger` | metric moved the wrong way, target missed |
-| `late` | deadline passed / at risk | `--fx-danger` + clock icon | overdue requests, delayed delivery, delayed vehicle lane |
+| `late` | one item's deadline passed / at risk | `--fx-danger` + clock icon | a single overdue request, delayed delivery, delayed vehicle lane. An aggregate count such as "8 overdue requests" uses `thresholdRule` and is `critical` (FE_GaugeKpiCard.md) |
 | `unavailable` | no data, stale data, source down | `--fx-slate` | "–" value, greyed card |
 | `neutral` | no judgement | `--fx-primary` / ink | plain figures, forecast |
 
@@ -376,16 +378,27 @@ data (Model) ──► rule (domain/tone.ts, thresholds.ts) ──► Tone ─�
 
 | Situation | Rule function | Example from the prototype |
 |---|---|---|
-| Alarm / warning from occupancy and queue time | `zoneTone(occupancy, leadMin)`, `zoneStatus(...)` | occupancy ≥ 90 % → `critical`; ≥ 80 % or lead time ≥ 25 min → `warning`; else `good` |
-| Layout tile bar colour | `layoutTone(occupancy, leadMin)` | ≥ 85 % red, ≥ 75 % or ≥ 25 min yellow, else green; alert dot on ≥ 85 % |
+| Alarm / warning from occupancy and queue time | `zoneTone(occupancy, leadMin)`, `zoneStatus(...)` – built on `OCCUPANCY_RULE` | occupancy ≥ 90 % → `critical`; 75–89 % or lead time ≥ 25 min → `warning`; below 75 % → `good` |
+| Layout tile bar colour | `layoutTone(occupancy, leadMin)` – same function as `zoneTone` | same tone as the zone status; alert dot when the tone is `critical` (≥ 90 %) |
 | Negative change vs. yesterday | `deltaTone(delta, upIsGood)` | lead time ↑ → `bad`, throughput ↑ → `good` |
 | Target not met | `targetTone(value, target, direction)` | picking 28 min vs. target ≤ 30 min → `good`; 32 min → `bad` |
-| Late deadline | `deadlineTone(dueAt, now, doneAt?)` | overdue count > 0 → `late`; due within the warning window → `warning` |
+| Late deadline (one item) | `deadlineTone(dueAt, now, doneAt?)` | a single request or vehicle task past its due time → `late`; due within the warning window → `warning` |
 | Ring / percentage KPI (supply on-time, staging, warehouse) | `thresholdRule({ direction, goodAt, warningAt })` – one abstract function, thresholds per card in `domain/thresholds.ts` | on-time 96 % → `warning`; warehouse 68 % → `good`; 8 overdue → `critical` (see [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)) |
-| Alert severity | `alertTone(severity)` | `critical` / `warning` / `info` → matching tone and icon |
+| Alert severity | `alertTone(severity)` | `critical` / `warning` / `info` → matching tone and icon; the same `AlertItem` also colours KPI notices ([FE_AlertModel.md](FE_AlertModel.md)) |
 | Table cell highlight | `cellTone(column, value)` | queue ≥ 8 or lead time ≥ 28 min → `bad` |
 | Missing or stale data | `dataTone(value, fetchedAt, maxAge)` | `null`, error or older than 2 × refresh interval → `unavailable` |
-| Resource problem | `resourceTone(resource)` | AGV offline / battery low → `critical` |
+| Resource problem | `resourceTone(resource)` | AGV offline / battery low → `warning` |
+
+**Decided thresholds** (defined once in `domain/thresholds.ts`, used by cards, tiles, tables and alerts):
+
+| Rule | good | warning | critical |
+|---|---|---|---|
+| `OCCUPANCY_RULE` (zones, staging, warehouse) | < 75 % | 75–89 % | ≥ 90 % |
+| `SUPPLY_ONTIME_RULE` (on-time rate, higher is better) | ≥ 98 % | 90–97 % | < 90 % |
+| `OVERDUE_RULE` (overdue requests) | 0 | 1–3 | ≥ 4 |
+| Offline vehicle (alert and resource row) | – | offline | – |
+
+Delta colours: a rising occupancy is `bad` (red); there is no neutral band. The limits are decided values for the design; replace them with the plant's real targets when available, in one place. Documents using them: [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) §3.2, [FE_AlertModel.md](FE_AlertModel.md) §3.1.
 
 ```ts
 // domain/tone.ts
@@ -503,7 +516,7 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 ## 4. Model & Service (reference, for completeness)
 
-**Domain types** (`types/`): `Kpi`, `ThroughputStep`, `Alert{severity}`, `Zone{area, occupancy, queue, avgLeadMin}`, `StagingArea`, `Dock`, `Vehicle{kind, zone, offline}`, `ResourceGroup`, `ProductDemand`, `Forecast`, `LeadTimeSeries`, `Scenario`, `SimulationResult`, `Recommendation`, `TimeRange`, `ViewMode`.
+**Domain types** (`types/`): `Kpi`, `ThroughputStep`, `Alert` / `AlertItem{kind, severity, facts}` (see [FE_AlertModel.md](FE_AlertModel.md)), `Zone{area, occupancy, queue, avgLeadMin}`, `StagingArea`, `Dock`, `Vehicle{kind, zone, offline}`, `ResourceGroup`, `ProductDemand`, `Forecast`, `LeadTimeSeries`, `Scenario`, `SimulationResult`, `Recommendation`, `TimeRange`, `ViewMode`.
 
 **Pure business rules** (`domain/`, ported from the prototype and unit tested):
 
@@ -517,8 +530,11 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 | `isBetter(metric, base, value)` | `renderSim` |
 | `sortRecommendations(list, mode)` | `renderRecs` |
 | `deltaTone(delta, upIsGood)` | `deltaSpan` |
+| `thresholdRule(options)`, `percentOf(current, total)` | ring KPIs ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)) |
+| `noticeFromAlert`, `deriveAlerts`, `formatAlertDetail` | alerts ([FE_AlertModel.md](FE_AlertModel.md)) |
+| `barPercent`, `axisMax` | throughput ([FE_ThroughputCard.md](FE_ThroughputCard.md)) |
 
-**Repositories** (`services/repositories/`): `getOverview(range)`, `getAlerts(range, level?)`, `getWarehouseSnapshot(range)`, `getDemand(range)`, `getForecast(days)`, `getLeadTimeTrend(range)`, `getScenarios()`, `runSimulation(id)`, `getRecommendations()`, `login`, `logout`, `getMe`, `getUserPrefs`/`saveUserPrefs`. Each returns **domain** objects (mapped from DTOs). `services/mock/` ports `BASE_DATA` and `getData()` so the UI works before the backend exists; selected by `NEXT_PUBLIC_DATA_SOURCE=mock|http`.
+**Repositories** (`services/repositories/`): `getOverview(range)` (one snapshot that also carries the `Alert` list; the alert level filter is applied in the browser, see [FE_AlertModel.md](FE_AlertModel.md) §4), `getWarehouseSnapshot(range)`, `getDemand(range)`, `getForecast(days)`, `getLeadTimeTrend(range)`, `getScenarios()`, `runSimulation(id)`, `getRecommendations()`, `login`, `logout`, `getMe`, `getUserPrefs`/`saveUserPrefs`. Each returns **domain** objects (mapped from DTOs). `services/mock/` ports `BASE_DATA` and `getData()` so the UI works before the backend exists; selected by `NEXT_PUBLIC_DATA_SOURCE=mock|http`.
 
 **State split:**
 
@@ -536,7 +552,7 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 1. Move shared header filters and tab logic out of `components/header` and `components/tabs` into `features/shell/` and drive them from stores.
 2. Replace `lib/mock-data.ts` with `services/mock/` behind a repository; remove direct imports of mock data in cards.
-3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into generic `LeadTimeKpiCard` and `OccupancyKpiCard`.
+3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into `LeadTimeKpiCard` ([FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md)) and the three ring cards into `GaugeKpiCard` ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)); merge `throughput-summary-card` / `throughput-chart` into `ThroughputCard` ([FE_ThroughputCard.md](FE_ThroughputCard.md)).
 4. Replace hard-coded colours (`#081c4b`, etc.) with the tokens in §2.4.
 5. Convert the single-page tab view to route segments (`/overview`, `/warehouse`, …) so URLs are shareable, matching the prototype's hash routes.
 6. The prototype uses Plotly; the project uses ECharts – port chart options once into `components/charts` builders (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.

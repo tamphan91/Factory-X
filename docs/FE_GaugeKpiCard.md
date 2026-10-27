@@ -1,6 +1,6 @@
 # GaugeKpiCard – Material Supply On-time Rate, Staging Occupancy, Warehouse Occupancy
 
-Design notes for the three Overview KPI cards that show a **ring (gauge) with a percentage**. Part of [FE-design.md](FE-design.md) (§2.2 Overview, §2.5 data-driven styles). Sibling of [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) (cards with a trend line); both families share `KpiCardShell` and the delta block.
+Design notes for the three Overview KPI cards that show a **ring (gauge) with a percentage**. Part of [FE-design.md](FE-design.md) (§2.2 Overview, §2.5 data-driven styles). Sibling of [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) (cards with a trend line); both families share `KpiCardShell` and the delta block. The notice number of the supply card is read from an alert item: see [FE_AlertModel.md](FE_AlertModel.md).
 
 ## 1. What the cards show
 
@@ -52,7 +52,7 @@ Locations: `components/overview/gauge-kpi-card.tsx` (shared card and its props),
 |---|---|---|
 | `currentStats` | the main numeric pair, `current / total` | 192 / 200, 78 / 100, 6,800 / 10,000 |
 | `currentOverview` | text label that describes `currentStats` | Delivered on time, Used Slots, Pallet Locations |
-| `currentNotice` | secondary number plus label, coloured by tone | 8 Overdue, 22 Available, 3,200 Available |
+| `currentNotice` | secondary number plus label, coloured by tone. When the number is an alert (8 Overdue) it is read from the matching `AlertItem` (see [FE_AlertModel.md](FE_AlertModel.md) §5); capacity numbers (Available) come from capacity data | 8 Overdue, 22 Available, 3,200 Available |
 
 The ring percentage is **calculated** from `currentStats` (`percentOf(current, total)`), not passed in: 192 / 200 = 96 %, 78 / 100 = 78 %, 6,800 / 10,000 = 68 %. This removes a number that could disagree with the stats.
 
@@ -66,29 +66,32 @@ export type ToneRule = (value: number) => Tone;
 
 type ThresholdOptions = {
   direction: "higherIsBetter" | "lowerIsBetter";
-  goodAt: number;      // "good" up to / from this value
-  warningAt: number;   // "warning" up to / from this value; anything worse is "critical"
+  goodAt: number;      // higherIsBetter: good when v >= goodAt;  lowerIsBetter: good when v < goodAt
+  warningAt: number;   // higherIsBetter: warning when v >= warningAt;  lowerIsBetter: warning when v < warningAt; else "critical"
 };
 
 export const thresholdRule = ({ direction, goodAt, warningAt }: ThresholdOptions): ToneRule =>
   (v) => {
     if (Number.isNaN(v)) return "unavailable";
     if (direction === "higherIsBetter") return v >= goodAt ? "good" : v >= warningAt ? "warning" : "critical";
-    return v <= goodAt ? "good" : v <= warningAt ? "warning" : "critical";
+    return v < goodAt ? "good" : v < warningAt ? "warning" : "critical";
   };
 ```
 
 `thresholdRule` is the single abstract function. The specialised cards only provide numbers, kept in `domain/thresholds.ts` so they can later come from configuration or the backend:
 
 ```ts
-// domain/thresholds.ts – example values, to be confirmed with the plant
+// domain/thresholds.ts – decided values (replace with the plant's real limits when available)
 export const SUPPLY_ONTIME_RULE = thresholdRule({ direction: "higherIsBetter", goodAt: 98, warningAt: 90 });
-export const STAGING_RULE       = thresholdRule({ direction: "lowerIsBetter",  goodAt: 70, warningAt: 85 });
-export const WAREHOUSE_RULE     = thresholdRule({ direction: "lowerIsBetter",  goodAt: 80, warningAt: 90 });
-export const OVERDUE_RULE       = thresholdRule({ direction: "lowerIsBetter",  goodAt: 0,  warningAt: 3  });
+// one occupancy rule for zones, staging and warehouse: good < 75 %, warning 75–89 %, critical >= 90 %
+export const OCCUPANCY_RULE     = thresholdRule({ direction: "lowerIsBetter",  goodAt: 75, warningAt: 90 });
+export const STAGING_RULE       = OCCUPANCY_RULE;
+export const WAREHOUSE_RULE     = OCCUPANCY_RULE;
+// overdue requests: good = 0, warning 1–3, critical >= 4
+export const OVERDUE_RULE       = thresholdRule({ direction: "lowerIsBetter",  goodAt: 1,  warningAt: 4  });
 ```
 
-With these values: supply 96 % → `warning` (yellow), staging 78 % → `warning`, warehouse 68 % → `good`, 8 overdue → `critical` (red). Staging and warehouse use the prototype's occupancy limits (75 / 85 / 90 %) as the starting point. The same `Tone` → colour mapping from FE-design.md §2.4 and §2.5 applies, so green, yellow and red come from tokens and no component contains a hex value.
+With these values: supply 96 % → `warning` (yellow), staging 78 % → `warning`, warehouse 68 % → `good`, 8 overdue → `critical` (red). Staging, warehouse and every zone share one occupancy rule (`OCCUPANCY_RULE`), so a card, a zone tile and an alert never disagree about the same percentage. The same `Tone` → colour mapping from FE-design.md §2.4 and §2.5 applies, so green, yellow and red come from tokens and no component contains a hex value.
 
 The same rule type serves any other metric (zone occupancy, queue length), so zone status and these cards cannot drift apart.
 
@@ -102,17 +105,21 @@ export interface GaugeKpiBaseProps {
   title: string;
   currentStats: { current: number; total: number };          // "192 / 200"
   currentOverview: string;                                   // "Delivered on time"
-  currentNotice: { value: number; label: string; toneRule?: ToneRule };  // "8" "Overdue"
+  currentNotice: CurrentNotice;                              // "8" "Overdue"
   toneRule: ToneRule;                                        // percent → tone, for the ring
   delta?: { value: string; upIsGood: boolean };              // "+2%", feeds deltaTone
 }
+
+// value + label + colour; built by noticeFromAlert() from an AlertItem, or by hand from capacity data
+export type CurrentNotice = { value: number; label: string; tone?: Tone; toneRule?: ToneRule };
 
 // ---- the shared card: base props only ----------------------------------------
 export function GaugeKpiCard(props: GaugeKpiBaseProps) { /* layout + GaugeChart + DeltaIndicator */ }
 
 // ---- specialised data: only what is different per card -----------------------
 export interface SupplyRateCardProps {
-  delivered: number; total: number; overdue: number; delta: string;
+  delivered: number; total: number; delta: string;
+  overdueAlert?: AlertItem<"material-delivery-delay">;   // the same item the Alerts panel shows (FE_AlertModel.md)
 }
 
 // a specialised card needing extra options extends the base:
@@ -132,13 +139,13 @@ Guidance:
 ### 3.4 Specialised cards
 
 ```tsx
-export function SupplyRateCard({ delivered, total, overdue, delta }: SupplyRateCardProps) {
+export function SupplyRateCard({ delivered, total, overdueAlert, delta }: SupplyRateCardProps) {
   return (
     <GaugeKpiCard
       title="Material Supply On-time Rate"
       currentStats={{ current: delivered, total }}
       currentOverview="Delivered on time"
-      currentNotice={{ value: overdue, label: "Overdue", toneRule: OVERDUE_RULE }}
+      currentNotice={noticeFromAlert(overdueAlert, f => f.overdueRequests, "Overdue")}   // value and tone from the AlertItem
       toneRule={SUPPLY_ONTIME_RULE}
       delta={{ value: delta, upIsGood: true }}
     />
@@ -179,7 +186,7 @@ Each wrapper decides the title, the labels, the data and the rules. The shared c
 ```tsx
 const percent = percentOf(currentStats.current, currentStats.total);   // domain/kpi.ts
 const ringTone = toneRule(percent);
-const noticeTone = currentNotice.toneRule?.(currentNotice.value) ?? "neutral";
+const noticeTone = currentNotice.tone ?? currentNotice.toneRule?.(currentNotice.value) ?? "neutral";   // tone from the AlertItem wins
 const deltaT = delta ? deltaTone(delta.value, delta.upIsGood) : undefined;
 ```
 
@@ -196,10 +203,10 @@ const deltaT = delta ? deltaTone(delta.value, delta.upIsGood) : undefined;
 | Delta ("+2%") | `deltaTone(delta, upIsGood)` |
 | Stats, overview and title | normal ink, never tone-coloured |
 
-## 5. Behaviour changes to confirm
+## 5. Behaviour changes (decided)
 
-* **Supply rate 96 %** is green today. With the example thresholds (good ≥ 98 %) it becomes yellow. This is what you described; the real limits must be confirmed.
-* **Occupancy delta "↑ +2%"** is green today. With `upIsGood: false`, a rising occupancy is red. If rising occupancy should be neutral or green for these two cards, change `upIsGood` in the wrapper; nothing else moves.
+* **Supply rate 96 %** is green today. With the decided thresholds (good ≥ 98 %, warning ≥ 90 %) it becomes yellow. Replace the limits with the plant's real targets when available.
+* **Occupancy delta "↑ +2%"** is green today. With `upIsGood: false`, a rising occupancy is red (decided). Nothing else moves if this changes later; edit `upIsGood` in the wrapper.
 * **"Available" notices** have no rule yet and stay black, as in the screenshot. Add a `toneRule` (for example higher is better) when thresholds are known.
 
 ## 6. Reused components
@@ -220,7 +227,7 @@ overview repository (supply, staging, warehouse numbers, delta)
    → <SupplyRateCard {...supply} /> <StagingCard {...staging} /> <WarehouseCard {...warehouse} />
 ```
 
-The controller supplies numbers only. Titles, labels and thresholds belong to the specialised cards and `domain/thresholds.ts`. The Time Range filter changes the query, so every card updates together.
+The overdue notice is the exception: the controller passes the `AlertItem` of kind `material-delivery-delay`, and the card reads `overdueRequests` and the severity from it. The Alerts panel reads the same item, so both change together ([FE_AlertModel.md](FE_AlertModel.md) §4). Otherwise the controller supplies numbers only. Titles, labels and thresholds belong to the specialised cards and `domain/thresholds.ts`. The Time Range filter changes the query, so every card updates together.
 
 ## 8. Edge cases
 
@@ -248,4 +255,5 @@ The controller supplies numbers only. Titles, labels and thresholds belong to th
 * Each card uses its own thresholds through the same `thresholdRule` function.
 * `currentStats`, `currentOverview` and `currentNotice` are the same fields on all three cards.
 * The overdue number is red; "Available" numbers stay neutral until rules exist.
+* The overdue number and its colour come from the `material-delivery-delay` `AlertItem`, the same item the Alerts panel row uses.
 * The delta colour comes from `deltaTone`, and `upIsGood` is set per card.
