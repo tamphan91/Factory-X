@@ -1,3 +1,10 @@
+import { capacityLines } from "@/models/domain/capacity";
+import {
+  FORECAST_AXIS_STEP,
+  dayLabels,
+  forecastAxisMax,
+  sliceForecast,
+} from "@/models/domain/forecast";
 import { formatDelta } from "@/models/domain/kpi";
 import {
   productTone,
@@ -7,6 +14,8 @@ import {
   type DemandSort,
 } from "@/models/domain/product-demand";
 import { deltaTone } from "@/models/domain/tone";
+import type { DemandForecast, ForecastRange } from "@/models/types/demand-forecast";
+import type { OverviewSnapshot } from "@/models/types/overview";
 import type {
   ProductDemand,
   ProductDemandSnapshot,
@@ -65,5 +74,33 @@ export const buildProductDemandVM = (
     },
     sort,
     sortOptions: SORT_OPTIONS,
+  };
+};
+
+const FORECAST_RANGE_OPTIONS: FilterOption<ForecastRange>[] = [
+  { value: "7", label: "Next 7 Days" },
+  { value: "14", label: "Next 14 Days" },
+];
+
+/** Capacity lines come from the Overview snapshot, so they follow its totals. */
+export const buildForecastVM = (
+  overview: OverviewSnapshot,
+  forecast: DemandForecast,
+  range: ForecastRange,
+): DemandVM["forecast"] => {
+  const shown = sliceForecast(forecast, Number(range));
+  const dayCount = shown.days.length;
+  const demand = shown.days.map((day) => day.demand);
+  const lines = capacityLines(overview, dayCount);
+  return {
+    labels: dayLabels(shown.startDate, dayCount),
+    demand,
+    warehouseCapacity: lines.warehouse,
+    stagingCapacity: lines.staging,
+    axisMax: forecastAxisMax(demand, [...lines.warehouse, ...lines.staging]),
+    axisInterval: FORECAST_AXIS_STEP,
+    actualDays: shown.actualDays,
+    range,
+    rangeOptions: FORECAST_RANGE_OPTIONS,
   };
 };
