@@ -34,43 +34,51 @@ One shared card, **`LeadTimeKpiCard`**, used twice. The inbound and picking card
 KpiCardShell                      (common parent card)
  ├─ title
  ├─ value + target                (left)
- ├─ delta block                   (right)  ← colour from delta rule
- └─ Sparkline(data, color)        (bottom) ← colour from process
+ ├─ delta block                   (right)  ← tone from the delta rule (computed in the controller)
+ └─ Sparkline(data, process)      (bottom) ← colour from process
       └─ EChart(option)
 ```
 
-Location: `components/overview/lead-time-kpi-card.tsx` (a generic KPI card, so it may move to `components/common/` when a second feature needs it).
+Location: `views/common/lead-time-kpi-card.tsx` and `lead-time-kpi-card.props.ts`. The view-model builder is in `controllers/overview.vm.ts`.
 
 ### 3.1 Props
 
 ```ts
+// views/common/lead-time-kpi-card.props.ts
 interface LeadTimeKpiCardProps {
-  title: string;        // "Inbound Lead Time" | "Picking / Kitting Lead Time"
-  value: number;        // 42
-  unit?: string;        // default "min"
-  target: number;       // 60  (shown as "Target ≤ 60 min")
-  delta: string;        // "-15%"
-  upIsGood?: boolean;   // default false: for lead time, down is good
-  trend: number[];      // any numeric array, drawn by Sparkline
-  color: string;        // process colour for the trend line
+  title: string;                         // "Inbound Lead Time" | "Picking / Kitting Lead Time"
+  value: number;                         // 42
+  valueTone: Tone;                       // targetTone(value, target, "max"), from the controller
+  unit?: string;                         // default "min"
+  target: number;                        // 60  (shown as "Target ≤ 60 min")
+  delta?: { text: string; tone: Tone };  // "-15%"; tone from deltaTone(deltaPct, "down")
+  trend: number[];                       // any numeric array, drawn by Sparkline
+  process: ProcessKey;                   // decides the trend-line colour
 }
 ```
 
-The props are display-ready, following the view-model rule in FE-design.md §2.3. The card makes no requests and holds no state.
+The props are display-ready, following the view-model rule in FE-design.md §2.3. The card makes no requests, holds no state and computes no tone.
 
 ### 3.2 Usage
 
-```tsx
-<LeadTimeKpiCard title="Inbound Lead Time"
-  value={42} target={60} delta="-15%" trend={inboundTrend}
-  color={PROCESS_COLOR.inbound} />
-
-<LeadTimeKpiCard title="Picking / Kitting Lead Time"
-  value={28} target={30} delta="+12%" trend={pickingTrend}
-  color={PROCESS_COLOR.picking} />
+```ts
+// controllers/overview.vm.ts
+const buildLeadTimeVM = ({ value, target, deltaPct, trend, process }: LeadTimeSnapshot) => ({
+  value,
+  valueTone: targetTone(value, target, "max"),
+  target,
+  delta: { text: formatDelta(deltaPct), tone: deltaTone(deltaPct, "down") },
+  trend,
+  process,
+});
 ```
 
-`PROCESS_COLOR` is the shared process-colour map (FE-design.md §2.3.1). Until it exists, pass the hex values the cards use now. Do not change the colours yet.
+```tsx
+<LeadTimeKpiCard title="Inbound Lead Time" {...inbound} />    // process: "inbound"
+<LeadTimeKpiCard title="Picking / Kitting Lead Time" {...picking} />   // process: "picking"
+```
+
+The process colour comes from `PROCESS_COLOR` (FE-design.md §2.3.1). Create the `--fx-process-*` tokens first (FE-design.md §5, item 7); no hex value is passed to the card. Keep the colours the cards use now when defining the tokens.
 
 ## 4. Colour rules
 
@@ -78,24 +86,15 @@ The card has two independent colours, each with one rule:
 
 | Element | Colour source | Meaning |
 |---|---|---|
-| Trend line and fill | `color` prop = **process colour only** (inbound = blue, picking = orange) | which process this is |
-| Delta text and arrow ("-15%", "+12%") | `deltaTone(delta, upIsGood)` from `domain/tone.ts` | good or bad versus yesterday (green or red) |
+| Trend line and fill | `process` prop = **process colour only** (inbound = blue, picking = orange) | which process this is |
+| Delta text and arrow ("-15%", "+12%") | `delta.tone` from `deltaTone(deltaPct, goodDirection)` in `models/domain/tone.ts`, called by the controller | good or bad versus yesterday (green or red) |
 
 Rules:
 * The line colour **never** changes with the data. It is always the process colour, whatever the value or delta.
-* The delta number is the **only** status colour on the card. It must come from `deltaTone`, not from an inline class such as `text-green-500`.
+* The delta number and the value (when over target) are the **only** status colours on the card. They come from `deltaTone` and `targetTone`, computed in the controller, not from an inline class such as `text-green-500`.
 * Consequence: the picking card has an orange line and a red "↑ +12%" at the same time. The line says "picking"; the delta says "worse than yesterday".
 
-```ts
-// domain/tone.ts (FE-design.md §2.5)
-export const deltaTone = (delta: string, upIsGood: boolean): Tone => {
-  const n = parseFloat(delta);
-  return !n ? "neutral" : (n > 0) === upIsGood ? "good" : "bad";
-};
-// in the card: const tone = deltaTone(delta, upIsGood);  → "good" | "bad" | "neutral"
-```
-
-`good`, `bad` and `neutral` map to the success, danger and neutral tokens (green, red, grey).
+`deltaTone(deltaPct, goodDirection)` is defined in FE-design.md §2.5 (`models/domain/tone.ts`). It takes a number, not the display string, and returns `unavailable` for a missing or NaN delta. `good`, `bad`, `neutral` and `unavailable` map to the success, danger, ink and slate tokens.
 
 ## 5. Reused components
 
@@ -104,7 +103,7 @@ export const deltaTone = (delta: string, upIsGood: boolean): Tone => {
 | `KpiCardShell` | common parent card | none now; later add an optional `title` prop |
 | `Sparkline` | trend line from any `number[]` | none |
 | `EChart` | renders the ECharts options | none |
-| `DeltaIndicator` (planned) | delta block; takes the tone from `deltaTone` | until it exists, the delta markup stays inside `LeadTimeKpiCard` but still uses `deltaTone` |
+| `DeltaIndicator` (planned) | delta block; takes `text` and `tone` | until it exists, the delta markup stays inside `LeadTimeKpiCard` and still takes its tone from the props |
 
 ## 6. Data flow (target)
 
@@ -113,8 +112,8 @@ export const deltaTone = (delta: string, upIsGood: boolean): Tone => {
 ```
 overview repository (inbound & picking lead time, delta, 18-point trend)
    → mapper → domain → useOverviewController → { inbound, picking } view-models
-   → <LeadTimeKpiCard {...inbound} color={PROCESS_COLOR.inbound} />
-   → <LeadTimeKpiCard {...picking} color={PROCESS_COLOR.picking} />
+   → <LeadTimeKpiCard {...inbound} />   (process: "inbound")
+   → <LeadTimeKpiCard {...picking} />   (process: "picking")
 ```
 
 The Time Range filter changes the query, so the value, delta and trend update together. Until the service layer exists, `overview-page.tsx` passes the hard-coded values.
@@ -124,14 +123,14 @@ The Time Range filter changes the query, so the value, delta and trend update to
 | Case | Behaviour |
 |---|---|
 | `trend` empty or `null` | `Sparkline` shows no line; the card shows "No data" |
-| `value` over `target` | value text uses the `bad` tone |
-| Delta missing | delta block hidden |
-| Delta `"0%"` | neutral colour, no arrow |
+| `value` over `target` | `valueTone` is `bad` (set by the controller) |
+| Delta missing or NaN | delta block hidden, tone `unavailable` |
+| Delta `0` | neutral colour, no arrow |
 
 ## 8. Change list
 
-1. Add `components/overview/lead-time-kpi-card.tsx` with the props above.
-2. In `features/overview/overview-page.tsx`, render `LeadTimeKpiCard` twice in place of `InboundLeadtimeCard` and `PickingLeadtimeCard`.
+1. Add `views/common/lead-time-kpi-card.tsx` and `lead-time-kpi-card.props.ts` with the props above, and the builder in `controllers/overview.vm.ts`.
+2. In `overview-page.tsx`, render `LeadTimeKpiCard` twice in place of `InboundLeadtimeCard` and `PickingLeadtimeCard`.
 3. Delete `inbound-leadtime-card.tsx` and `picking-leadtime-card.tsx`.
 4. Update the Status column in FE-design.md §2.2 when done.
 
