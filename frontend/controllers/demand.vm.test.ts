@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type { LeadTimeLine } from "@/models/types/lead-time";
 import { createDemandMock } from "@/services/mock/demand.mock";
 import { createOverviewMock } from "@/services/mock/overview.mock";
-import { buildForecastVM, buildProductDemandVM } from "./demand.vm";
+import {
+  buildForecastVM,
+  buildLeadTimeTrendVM,
+  buildProductDemandVM,
+} from "./demand.vm";
 
 describe("buildProductDemandVM", () => {
   const { productDemand } = createDemandMock();
@@ -63,5 +68,59 @@ describe("buildForecastVM", () => {
     const vm = buildForecastVM(createOverviewMock(), forecast, "7");
     expect(vm.axisMax).toBe(1200);
     expect(vm.axisInterval).toBe(400);
+  });
+});
+
+describe("buildLeadTimeTrendVM", () => {
+  const { leadTime } = createDemandMock();
+  const actualOf = (lines: LeadTimeLine[], process: LeadTimeLine["process"]) => {
+    const line = lines.find((item) => item.process === process)!;
+    return line.actual.slice(0, line.actualCount);
+  };
+
+  it("draws one line per process on the half-hour grid", () => {
+    const vm = buildLeadTimeTrendVM(createOverviewMock(), leadTime, "today");
+    expect(vm.lines.map((line) => line.label)).toEqual([
+      "Receiving",
+      "Put-away",
+      "Picking / Kitting",
+      "Staging",
+    ]);
+    expect(vm.labels[0]).toBe("08:00");
+    expect(vm.labels).toHaveLength(29);
+  });
+
+  it("takes the Receiving and Picking actual points from the Overview", () => {
+    const overview = createOverviewMock();
+    const vm = buildLeadTimeTrendVM(overview, leadTime, "today");
+    expect(actualOf(vm.lines, "inbound")).toEqual(overview.inbound.trend);
+    expect(actualOf(vm.lines, "picking")).toEqual(overview.picking.trend);
+  });
+
+  it("follows a change in the Overview trends", () => {
+    const overview = createOverviewMock();
+    overview.inbound.trend = [10, 11, 12];
+    overview.picking.trend = [5, 6];
+    const vm = buildLeadTimeTrendVM(overview, leadTime, "today");
+    expect(actualOf(vm.lines, "inbound")).toEqual([10, 11, 12]);
+    expect(actualOf(vm.lines, "picking")).toEqual([5, 6]);
+  });
+
+  it("keeps Put-away and Staging on their own data", () => {
+    const vm = buildLeadTimeTrendVM(createOverviewMock(), leadTime, "today");
+    expect(actualOf(vm.lines, "putaway")).toEqual(leadTime.today[1].actual);
+  });
+
+  it("starts the forecast where the longest actual line ends", () => {
+    const overview = createOverviewMock();
+    const vm = buildLeadTimeTrendVM(overview, leadTime, "today");
+    expect(vm.forecastStart).toBe(overview.inbound.trend.length - 1);
+  });
+
+  it("uses its own data for other ranges", () => {
+    const overview = createOverviewMock();
+    overview.inbound.trend = [10, 11, 12];
+    const vm = buildLeadTimeTrendVM(overview, leadTime, "week");
+    expect(actualOf(vm.lines, "inbound")).toEqual(leadTime.week[0].actual);
   });
 });

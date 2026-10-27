@@ -7,6 +7,11 @@ import {
 } from "@/models/domain/forecast";
 import { formatDelta } from "@/models/domain/kpi";
 import {
+  forecastStartIndex,
+  resolveLeadTimeSeries,
+  timeLabels,
+} from "@/models/domain/lead-time";
+import {
   productTone,
   signalLevel,
   sortProducts,
@@ -15,6 +20,7 @@ import {
 } from "@/models/domain/product-demand";
 import { deltaTone } from "@/models/domain/tone";
 import type { DemandForecast, ForecastRange } from "@/models/types/demand-forecast";
+import type { LeadTimeRange, LeadTimeSeries } from "@/models/types/lead-time";
 import type { OverviewSnapshot } from "@/models/types/overview";
 import type {
   ProductDemand,
@@ -102,5 +108,27 @@ export const buildForecastVM = (
     actualDays: shown.actualDays,
     range,
     rangeOptions: FORECAST_RANGE_OPTIONS,
+  };
+};
+
+const LEAD_TIME_RANGE_OPTIONS: FilterOption<LeadTimeRange>[] = [
+  { value: "today", label: "Today" },
+  { value: "yesterday", label: "Yesterday" },
+  { value: "week", label: "Last 7 days" },
+];
+
+/** Receiving and Picking actual points come from the Overview snapshot for today. */
+export const buildLeadTimeTrendVM = (
+  overview: OverviewSnapshot,
+  leadTime: Record<LeadTimeRange, LeadTimeSeries[]>,
+  range: LeadTimeRange,
+): DemandVM["leadTime"] => {
+  const lines = resolveLeadTimeSeries(range, leadTime[range], overview);
+  return {
+    labels: timeLabels(),
+    lines,
+    forecastStart: forecastStartIndex(lines),
+    range,
+    rangeOptions: LEAD_TIME_RANGE_OPTIONS,
   };
 };
