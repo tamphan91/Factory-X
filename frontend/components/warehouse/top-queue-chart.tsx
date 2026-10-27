@@ -114,6 +114,8 @@ export function TopQueueChart() {
 
         <select className="border rounded px-2 py-1 text-sm">
           <option>Top 5</option>
+          <option>Top 3</option>
+          <option>All zones</option>
         </select>
 
       </div>

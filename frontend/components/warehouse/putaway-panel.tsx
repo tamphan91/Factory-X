@@ -13,7 +13,8 @@ export function PutawayPanel() {
             flex
             flex-col
             items-center
-            h-[378px]
+            justify-center
+            h-full
             "
         >
             <div

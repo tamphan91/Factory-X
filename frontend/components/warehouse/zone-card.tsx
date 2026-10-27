@@ -24,7 +24,9 @@ export function ZoneCard({
       border
       border-slate-500
       rounded-md
+      text-xs
       p-3
+      space-y-1
       "
     >
       {alert && (
@@ -38,7 +40,6 @@ export function ZoneCard({
           rounded-full
           bg-red-500
           text-white
-          text-xs
           flex
           items-center
           justify-center
@@ -53,13 +54,13 @@ export function ZoneCard({
         {name}
       </div>
 
-      <div className="text-center mt-2 text-xl font-bold">
+      <div className="text-center font-bold">
         {occupancy}%
       </div>
 
-      <div className="mt-3 h-3 bg-slate-600 rounded">
+      <div className="h-2 bg-slate-600 rounded">
         <div
-          className="h-3 rounded"
+          className="h-2 rounded"
           style={{
             width: `${occupancy}%`,
             backgroundColor: color,
@@ -68,13 +69,10 @@ export function ZoneCard({
       </div>
 
       {vehicle && (
-        <div className="mt-3 text-center">
+        <div className="text-center">
           <span
             className="
             bg-blue-600
-            text-xs
-            px-2
-            py-1
             rounded
             "
           >

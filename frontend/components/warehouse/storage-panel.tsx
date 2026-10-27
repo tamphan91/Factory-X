@@ -10,6 +10,7 @@ export function StoragePanel() {
       border-emerald-500
       rounded-md
       p-3
+      h-full
       "
     >
       <div

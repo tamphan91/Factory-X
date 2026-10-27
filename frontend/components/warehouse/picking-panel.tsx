@@ -10,6 +10,7 @@ export function PickingPanel() {
       border-yellow-500
       rounded-md
       p-3
+      h-full
       "
     >
       <div
@@ -40,9 +41,7 @@ export function PickingPanel() {
           color="#22c55e"
         />
 
-      </div>
-
-      <div className="mt-3">
+        <div className="col-span-2 w-[calc(50%-6px)] justify-self-center">
 
         <ZoneCard
           name="Zone I"
@@ -52,6 +51,10 @@ export function PickingPanel() {
         />
 
       </div>
+
+      </div>
+
+      
 
     </div>
   );

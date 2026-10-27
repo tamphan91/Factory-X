@@ -10,6 +10,7 @@ export function ReceivingPanel() {
       border-slate-500
       rounded-md
       p-2
+      h-full
       "
     >
       <div
