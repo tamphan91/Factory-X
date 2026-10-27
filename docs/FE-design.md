@@ -179,7 +179,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DemoDataBadge` | shows "Simulation / Demo Data" when repository = mock | header | Not implemented – demo text is only in `DashboardFooter` |
 | `LastUpdated` | timestamp + relative age | header | Not implemented – date is hard-coded in `DashboardHeader` |
 | `SignalBars` | `level 1-4`, `tone` | demand list | Not implemented |
-| `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`components/charts/echart.tsx`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/chart-theme.ts`) exists but is not applied |
+| `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`views/common/echart.tsx`, props in `echart.props.ts`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/chart-theme.ts`) exists but is not applied |
 
 ### 2.2 Specialized Components (`views/features/*/`)
 
@@ -194,7 +194,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `ViewModeToggle` | Zone View / Vehicle View | Not implemented |
 | `LiveIndicator` | pulsing dot, "Live (5 min refresh)", clock, manual refresh button, pause toggle | Partial – static "Live (5 min refresh)" text and hard-coded timestamp in `DashboardHeader`; no refresh or pause |
 | `UserMenu` | avatar, name, Logout | Not implemented |
-| `DashboardTabs` | **reorderable** tab bar (drag), see §3.4 | Partial as `DashboardTabs` (`components/tabs/dashboard-tabs.tsx`) – 4 tabs; only Overview has content, others show "Coming Soon"; not draggable, no routes |
+| `DashboardTabs` | **reorderable** tab bar (drag), see §3.4 | Partial as `DashboardTabs` (`views/features/shell/dashboard-tabs.tsx`, props in `dashboard-tabs.props.ts`) – 4 tabs; Overview and Warehouse content is passed in by `app/dashboard/page.tsx`, the others show "Coming Soon"; not draggable, no routes |
 | `SortableTab` | one draggable tab trigger + drag handle | Not implemented |
 | `ExternalLinkTab` | "Solution Simulation ↗" | Not implemented |
 | `DashboardFooter` | | Implemented as `DashboardFooter` (`components/footer/dashboard-footer.tsx`) |
@@ -602,7 +602,7 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 ## 5. Migration notes from the current `frontend/`
 
-1. Move shared header filters and tab logic out of `components/header` and `components/tabs` into `views/features/shell/` (with `controllers/shell.controller.ts`) and drive them from stores.
+1. Move shared header filters and tab logic out of `components/header` (the tab bar is already in `views/features/shell/`) into `views/features/shell/` (with `controllers/shell.controller.ts`) and drive them from stores.
 2. Replace `lib/mock-data.ts` with `services/mock/` behind a repository; remove direct imports of mock data in cards.
 3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into `LeadTimeKpiCard` ([FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md)) and the three ring cards into `GaugeKpiCard` ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)); merge `throughput-summary-card` / `throughput-chart` into `ThroughputCard` ([FE_ThroughputCard.md](FE_ThroughputCard.md)).
 4. Replace hard-coded colours (`#081c4b`, etc.) with the tokens in §2.4.
