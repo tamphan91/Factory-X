@@ -4,4 +4,5 @@ import type { ReactNode } from "react";
 export interface DashboardTabsProps {
   overview: ReactNode;
   warehouse: ReactNode;
+  demand: ReactNode;
 }

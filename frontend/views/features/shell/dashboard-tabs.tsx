@@ -9,7 +9,7 @@ import {
 
 import type { DashboardTabsProps } from "./dashboard-tabs.props";
 
-export function DashboardTabs({ overview, warehouse }: DashboardTabsProps) {
+export function DashboardTabs({ overview, warehouse, demand }: DashboardTabsProps) {
   return (
     <Tabs
       defaultValue="overview"
@@ -54,7 +54,7 @@ export function DashboardTabs({ overview, warehouse }: DashboardTabsProps) {
       </TabsContent>
 
       <TabsContent value="demand" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
-        Coming Soon
+        {demand}
       </TabsContent>
 
       <TabsContent value="simulation" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
