@@ -133,11 +133,9 @@ function getOccupancyBg(value: number) {
 
 export function ZonePerformanceTable() {
   return (
-    <Card  className="h-[430px] rounded-xl shadow-sm">
+    <Card  className="p-4 h-[430px] rounded-xl shadow-sm">
 
-      <CardContent className="p-4">
-
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center">
 
           <div>
 
@@ -157,15 +155,15 @@ export function ZonePerformanceTable() {
             </SelectTrigger>
 
             <SelectContent>
-              <SelectItem value="all">
+              <SelectItem value="All Areas">
                 All Areas
               </SelectItem>
 
-              <SelectItem value="storage">
+              <SelectItem value="Storage">
                 Storage
               </SelectItem>
 
-              <SelectItem value="picking">
+              <SelectItem value="Picking">
                 Picking
               </SelectItem>
             </SelectContent>
@@ -310,8 +308,6 @@ export function ZonePerformanceTable() {
           </Table>
 
         </div>
-
-      </CardContent>
 
     </Card>
   );

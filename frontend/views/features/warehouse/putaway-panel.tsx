@@ -9,11 +9,12 @@ export function PutawayPanel() {
             border
             border-slate-500
             rounded-md
-            p-3
+            p-2
             flex
             flex-col
             items-center
-            h-[378px]
+            justify-center
+            h-full
             "
         >
             <div

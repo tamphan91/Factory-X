@@ -9,19 +9,20 @@ export function HandoverPanel() {
       bg-slate-100
       text-slate-900
       rounded-md
-      h-full
-      p-4
+      p-2
       flex
       flex-col
       items-center
       justify-between
+      space-y-1
+      h-full
       "
     >
       <div
         className="
         text-center
         font-bold
-        text-sm
+        text-xs
         "
       >
         Handover to
@@ -43,7 +44,7 @@ export function HandoverPanel() {
           Ready for Delivery
         </div>
 
-        <div className="text-xl mt-1">
+        <div className="text-xs mt-1">
           35 pallets
         </div>
 
