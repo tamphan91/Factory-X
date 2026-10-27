@@ -1,4 +1,5 @@
 import { LEAD_TIME_SLOT_COUNT } from "@/models/domain/lead-time";
+import type { DemandSnapshot } from "@/models/types/demand";
 import type { DemandForecast } from "@/models/types/demand-forecast";
 import type { LeadTimeRange, LeadTimeSeries } from "@/models/types/lead-time";
 import type { ProductDemandSnapshot } from "@/models/types/product-demand";
@@ -103,4 +104,9 @@ const createLeadTimeMock = (): Record<LeadTimeRange, LeadTimeSeries[]> => ({
   ],
 });
 
-export { createForecastMock, createLeadTimeMock, createProductDemandMock };
+export const createDemandMock = (): DemandSnapshot => ({
+  productDemand: createProductDemandMock(),
+  forecast: createForecastMock(),
+  leadTime: createLeadTimeMock(),
+  updatedAt: new Date().toISOString(),
+});
