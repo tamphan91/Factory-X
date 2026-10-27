@@ -84,30 +84,30 @@ None needed. `PanelCard`, `FilterSelect`, `DeltaIndicator` and `EChart` already 
 ## Phase 4 – Specialised components (`views/features/demand/`)
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P4-T01 | `ProductDemandRow` (icon, name, requests, `SignalBars`, `title` text) | props (P1-T09), `Icon` (P2-T02), `SignalBars` (P2-T01) | product-demand-row.tsx | P1-T09, P2-T01, P2-T02 | 1 | tsc, eslint pass | todo |
-| P4-T02 | `DemandTotal` (label, total, `DeltaIndicator` with "(vs. yesterday)") | props (P1-T09), `DeltaIndicator` (existing) | demand-total.tsx | P1-T09 | 1 | tsc, eslint pass | todo |
-| P4-T04 | `DemandForecastChart` (`PanelCard`, range `FilterSelect`, `EChart`) | props (P1-T09), `buildForecastOption` (P2-T04) | demand-forecast-chart.tsx | P1-T09, P2-T04 | 1 | tsc, eslint pass | todo |
-| P4-T05 | `LeadTimeTrendChart` (`PanelCard`, range `FilterSelect`, `EChart`) | props (P1-T09), `buildLeadTimeOption` (P2-T05) | lead-time-trend-chart.tsx | P1-T09, P2-T05 | 1 | tsc, eslint pass | todo |
-| P4-T03 | `ProductDemandPanel` (`PanelCard`, sort `FilterSelect`, group subheader, rows, `DemandTotal`, empty state) | props (P1-T09), rows (P4-T01), total (P4-T02) | product-demand-panel.tsx | P4-T01, P4-T02 | 2 | tsc, eslint pass | todo |
-| P4-T06 | `DemandPage` grid (panel left, two charts stacked right) | panel (P4-T03), charts (P4-T04, P4-T05), `DemandPageProps` (P1-T09) | demand-page.tsx | P4-T03, P4-T04, P4-T05 | 3 | tsc, eslint pass | todo |
+| P4-T01 | `ProductDemandRow` (icon, name, requests, `SignalBars`, `title` text) | props (P1-T09), `Icon` (P2-T02), `SignalBars` (P2-T01) | product-demand-row.tsx | P1-T09, P2-T01, P2-T02 | 1 | tsc, eslint pass | done |
+| P4-T02 | `DemandTotal` (label, total, `DeltaIndicator` with "(vs. yesterday)") | props (P1-T09), `DeltaIndicator` (existing) | demand-total.tsx | P1-T09 | 1 | tsc, eslint pass | done |
+| P4-T04 | `DemandForecastChart` (`PanelCard`, range `FilterSelect`, `EChart`) | props (P1-T09), `buildForecastOption` (P2-T04) | demand-forecast-chart.tsx | P1-T09, P2-T04 | 1 | tsc, eslint pass | done |
+| P4-T05 | `LeadTimeTrendChart` (`PanelCard`, range `FilterSelect`, `EChart`) | props (P1-T09), `buildLeadTimeOption` (P2-T05) | lead-time-trend-chart.tsx | P1-T09, P2-T05 | 1 | tsc, eslint pass | done |
+| P4-T03 | `ProductDemandPanel` (`PanelCard`, sort `FilterSelect`, group subheader, rows, `DemandTotal`, empty state) | props (P1-T09), rows (P4-T01), total (P4-T02) | product-demand-panel.tsx | P4-T01, P4-T02 | 2 | tsc, eslint pass | done |
+| P4-T06 | `DemandPage` grid (panel left, two charts stacked right) | panel (P4-T03), charts (P4-T04, P4-T05), `DemandPageProps` (P1-T09) | demand-page.tsx | P4-T03, P4-T04, P4-T05 | 3 | tsc, eslint pass | done |
 
 ## Phase 5 – Store, services, controller
 The forecast range and the lead-time range are local selects kept in `uiStore`, as in the screenshot. Switching them to the header's global time range is a later task.
 
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P5-T01 | Extend `uiStore`: `demandSort`, `forecastRange` ("7" \| "14"), `leadTimeRange`, with setters | `DemandSort` (P1-T05), `LeadTimeRange` (P1-T03) | models/stores/ui-store.ts | P1-T03, P1-T05 | 1 | tsc, eslint pass; existing keys unchanged | todo |
-| P5-T02 | Mock `DemandSnapshot`: 12 products (prototype list), +10% delta, 14 forecast days (demand only), lead-time series for 3 ranges; "today" Receiving and Picking hold forecast tails only | `DemandSnapshot` (P1-T03) | services/mock/demand.mock.ts | P1-T03 | 1 | tsc passes; no Overview number copied (no capacity values, no Receiving or Picking actual); products sum to 330 | todo |
-| P5-T03 | `demandRepo` interface + mock implementation, same shape as `overviewRepo` | mock (P5-T02) | services/repositories/demand.repo.ts | P5-T02 | 2 | tsc, eslint pass | todo |
-| P5-T04 | View-model builders: `buildProductDemandVM`, `buildForecastVM(overview, demand, days)`, `buildLeadTimeTrendVM(overview, demand, range)` | domain (P1-T05, P1-T06, P1-T07, P1-T10), props (P1-T09), `OverviewSnapshot` (existing), mock (P5-T02, tests only) | controllers/demand.vm.ts, demand.vm.test.ts | P1-T05, P1-T06, P1-T07, P1-T09, P1-T10, P5-T02 | 2 | tests: total 330 and tone `bad` for "+10%"; sorted rows; 7 vs 14 days; **changing the Overview snapshot changes the Receiving/Picking line and the two capacity lines** | todo |
-| P5-T05 | `useDemandController()` → `{ status, vm, actions }`; loads `overviewRepo` and `demandRepo` together, reads and writes `uiStore` | repos (P5-T03, existing `overviewRepo`), store (P5-T01), builders (P5-T04), `DemandVM` (P1-T09) | controllers/demand.controller.ts | P5-T01, P5-T03, P5-T04 | 3 | tsc, eslint pass; error state when either repo fails | todo |
+| P5-T01 | Extend `uiStore`: `demandSort`, `forecastRange` ("7" \| "14"), `leadTimeRange`, with setters | `DemandSort` (P1-T05), `LeadTimeRange` (P1-T03) | models/stores/ui-store.ts | P1-T03, P1-T05 | 1 | tsc, eslint pass; existing keys unchanged | done |
+| P5-T02 | Mock `DemandSnapshot`: 12 products (prototype list), +10% delta, 14 forecast days (demand only), lead-time series for 3 ranges; "today" Receiving and Picking hold forecast tails only | `DemandSnapshot` (P1-T03) | services/mock/demand.mock.ts | P1-T03 | 1 | tsc passes; no Overview number copied (no capacity values, no Receiving or Picking actual); products sum to 330 | done |
+| P5-T03 | `demandRepo` interface + mock implementation, same shape as `overviewRepo` | mock (P5-T02) | services/repositories/demand.repo.ts | P5-T02 | 2 | tsc, eslint pass | done |
+| P5-T04 | View-model builders: `buildProductDemandVM`, `buildForecastVM(overview, demand, days)`, `buildLeadTimeTrendVM(overview, demand, range)` | domain (P1-T05, P1-T06, P1-T07, P1-T10), props (P1-T09), `OverviewSnapshot` (existing), mock (P5-T02, tests only) | controllers/demand.vm.ts, demand.vm.test.ts | P1-T05, P1-T06, P1-T07, P1-T09, P1-T10, P5-T02 | 2 | tests: total 330 and tone `bad` for "+10%"; sorted rows; 7 vs 14 days; **changing the Overview snapshot changes the Receiving/Picking line and the two capacity lines** | done |
+| P5-T05 | `useDemandController()` → `{ status, vm, actions }`; loads `overviewRepo` and `demandRepo` together, reads and writes `uiStore` | repos (P5-T03, existing `overviewRepo`), store (P5-T01), builders (P5-T04), `DemandVM` (P1-T09) | controllers/demand.controller.ts | P5-T01, P5-T03, P5-T04 | 3 | tsc, eslint pass; error state when either repo fails | done |
 
 ## Phase 6 – Page wiring, docs
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P6-T01 | Client container: calls the controller, renders `DemandPage`, loading and error text like `OverviewSection` | controller (P5-T05), page (P4-T06) | app/dashboard/demand-section.tsx | P4-T06, P5-T05 | 1 | tsc, eslint pass | todo |
-| P6-T02 | Wire the tab: add `demand: ReactNode` to the tabs props, replace its "Coming Soon", pass `<DemandSection />` from the page (shared files, one task) | container (P6-T01) | views/features/shell/dashboard-tabs.props.ts, dashboard-tabs.tsx, app/dashboard/page.tsx | P6-T01 | 2 | `next build` passes; Simulation tab still "Coming Soon"; shell imports no feature folder | todo |
-| P6-T03 | Update docs: Status rows for the Demand components, `SignalBars`, `Icon`, chart builders in FE-design.md §2.1/§2.2; this file marked done | P6-T02 | docs/FE-design.md | P6-T02 | 3 | statuses match the code | todo |
+| P6-T01 | Client container: calls the controller, renders `DemandPage`, loading and error text like `OverviewSection` | controller (P5-T05), page (P4-T06) | app/dashboard/demand-section.tsx | P4-T06, P5-T05 | 1 | tsc, eslint pass | done |
+| P6-T02 | Wire the tab: add `demand: ReactNode` to the tabs props, replace its "Coming Soon", pass `<DemandSection />` from the page (shared files, one task) | container (P6-T01) | views/features/shell/dashboard-tabs.props.ts, dashboard-tabs.tsx, app/dashboard/page.tsx | P6-T01 | 2 | `next build` passes; Simulation tab still "Coming Soon"; shell imports no feature folder | done |
+| P6-T03 | Update docs: Status rows for the Demand components, `SignalBars`, `Icon` in FE-design.md §2.1/§2.2; the icon rule in `.claude/rules`; this file marked done | P6-T02 | docs/FE-design.md, .claude/rules/frontend-architecture.md | P6-T02 | 3 | statuses match the code | done |
 
 ## Execution plan
 Sequential: one task per commit, in wave order within each phase, starting a task only after its dependencies are `done`. Waves show what could run in parallel (no shared Output files within a wave).
