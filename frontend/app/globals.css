@@ -142,3 +142,37 @@
     @apply font-sans;
   }
 }
+/* Dashboard tokens (FE-design.md §2.4) */
+:root {
+  --fx-primary: #2f7cf6;
+  --fx-success: #1fb46b;
+  --fx-warning: #f59a23;
+  --fx-caution: #f2c200;
+  --fx-danger: #e5413e;
+  --fx-info: #2f7cf6;
+  --fx-slate: #7b8db3;
+  --fx-ink: #16213d;
+  --fx-muted: #69748f;
+  --fx-target: #cbd5e1;
+
+  --fx-process-inbound: #2f7cf6;
+  --fx-process-putaway: #1fb46b;
+  --fx-process-picking: #f59a23;
+  --fx-process-delivery: #8b5cf6;
+}
+
+@theme inline {
+  --color-fx-primary: var(--fx-primary);
+  --color-fx-success: var(--fx-success);
+  --color-fx-warning: var(--fx-warning);
+  --color-fx-caution: var(--fx-caution);
+  --color-fx-danger: var(--fx-danger);
+  --color-fx-info: var(--fx-info);
+  --color-fx-slate: var(--fx-slate);
+  --color-fx-ink: var(--fx-ink);
+  --color-fx-muted: var(--fx-muted);
+  --color-fx-process-inbound: var(--fx-process-inbound);
+  --color-fx-process-putaway: var(--fx-process-putaway);
+  --color-fx-process-picking: var(--fx-process-picking);
+  --color-fx-process-delivery: var(--fx-process-delivery);
+}

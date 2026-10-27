@@ -162,15 +162,15 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 | Component | Props (summary) | Used by | Status |
 |---|---|---|---|
-| `PanelCard` | `title`, `subtitle?`, `actions?`, `tone: "light"\|"dark"`, `children` – replaces repeated `.card`/`.dark` + `.hrow` header. `KpiCardShell` is its fixed-height KPI form: the KPI cards (gauge, lead-time, horizontal throughput) sit on it, the larger panels on `PanelCard` | every panel | Not implemented – each panel repeats `Card` + classes (e.g. `AlertsPanel`, `ThroughputChart`) |
+| `PanelCard` | `title`, `subtitle?`, `actions?`, `tone: "light"\|"dark"`, `children` – replaces repeated `.card`/`.dark` + `.hrow` header. `KpiCardShell` is its fixed-height KPI form: the KPI cards (gauge, lead-time, horizontal throughput) sit on it, the larger panels on `PanelCard` | every panel | Implemented as `PanelCard` (`views/common/panel-card.tsx`) – title, subtitle, actions; no `tone`; used by the alerts panel and the vertical throughput card |
 | `PanelHeader` | `title`, `subtitle`, `actions` slot | PanelCard | Not implemented – header row is inlined in each panel |
-| `FilterSelect` | `label?`, `options`, `value`, `onChange` – labelled `Select` with the prototype's `dd` look | all dropdowns | Not implemented – `Select` is inlined in `DashboardHeader`, `AlertsPanel`, `ThroughputChart` |
+| `FilterSelect` | `label?`, `options`, `value`, `onChange` – labelled `Select` with the prototype's `dd` look | all dropdowns | Implemented as `FilterSelect` (`views/common/filter-select.tsx`) – used by `AlertsPanel` and the vertical `ThroughputCard`; `DashboardHeader` still inlines `Select` |
 | `StatusDot` | `status: "ok"\|"warn"\|"critical"\|"info"` | docks, table status, legends | Not implemented – header uses a "●" text character |
-| `DeltaIndicator` | `text: string`, `tone: Tone`, `caption?` – ↑/↓ coloured; the tone comes from `deltaTone` in the controller | KPI cards, resources, totals | Not implemented – delta markup is duplicated inside each KPI card |
-| `ProgressBar` | `percent`, `appearance: { tone } \| { process }`, `height` – `.track/.fill` | throughput, resources | Not implemented – inlined in `ThroughputSummaryCard` |
-| `DonutGauge` | `percent`, `appearance: { tone } \| { process }`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (currently `components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no `appearance` |
-| `Sparkline` | `data[]`, `process: ProcessKey` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) |
-| `KpiCardShell` | `title`, `children` | KPI cards | Partial as `KpiCardShell` (`components/dashboard/kpi-card-shell.tsx`) – fixed height, `children` only, no `title` prop |
+| `DeltaIndicator` | `text: string`, `tone: Tone`, `caption?` – ↑/↓ coloured; the tone comes from `deltaTone` in the controller | KPI cards, resources, totals | Implemented as `DeltaIndicator` (`views/common/delta-indicator.tsx`) |
+| `ProgressBar` | `percent`, `appearance: { tone } \| { process }`, `height` – `.track/.fill` | throughput, resources | Implemented as `ProgressBar` (`views/common/progress-bar.tsx`) |
+| `DonutGauge` | `percent`, `appearance: { tone } \| { process }`, `thick?` – `gauge-chart` | KPI cards | Implemented as `DonutGauge` (`views/common/donut-gauge.tsx`) – no `thick` prop yet |
+| `Sparkline` | `data[]`, `process: ProcessKey` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`views/common/sparkline.tsx`) – takes `process` |
+| `KpiCardShell` | `title`, `children` | KPI cards | Implemented as `KpiCardShell` (`views/common/kpi-card-shell.tsx`) – optional `title` |
 | `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Not implemented – `lucide-react` icons used directly (only in `AlertsPanel`) |
 | `Legend` | `items: {color, label, dashed?}[]` | layout, queue, simulation | Not implemented |
 | `EmptyState` | message | alerts, tables | Not implemented |
@@ -204,14 +204,14 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 | Component | Notes | Status |
 |---|---|---|
-| `OverviewPage` | grid composition | Implemented as `OverviewPage` (`features/overview/overview-page.tsx`) – composes cards from `components/overview/`; static data |
-| `SupplyRateCard` | thin wrapper on the shared `GaugeKpiCard` (ring, current stats, overview, notice, delta); design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Partial as `SupplyRateCard` (`components/overview/supply-rate-card.tsx`) – layout done; values hard-coded, no props |
-| `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component**; design notes in [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) | Partial as `InboundLeadtimeCard`, `PickingLeadtimeCard` (`components/overview/`) – two separate copies with hard-coded data; generic `LeadTimeKpiCard` not created |
-| `StagingCard` / `WarehouseCard` | thin wrappers on the same shared `GaugeKpiCard` as `SupplyRateCard`, each with its own tone rule; design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Partial as `StagingCard`, `WarehouseCard` (`components/overview/`) – two separate copies with hard-coded data; shared `GaugeKpiCard` not created |
-| `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputSummaryCard` (`components/overview/throughput-summary-card.tsx`) – hard-coded data, inline bars; not yet sharing props, colours or parent card with `ThroughputChart` |
-| `ThroughputCard` (`orientation="vertical"`) | column chart per process, actual and target, with Actual / Actual vs Target dropdown (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Partial as `ThroughputChart` (`components/overview/throughput-chart.tsx`) – static bars; mode select not wired, no target series; own copy of the colours |
-| `AlertsPanel` | filter select + View All; reads the shared `Alert` model ([FE_AlertModel.md](FE_AlertModel.md)) | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
-| `AlertItem` | icon by severity, title, detail, time; one `AlertItem` of the shared `Alert` model, also the source of the supply card's overdue notice ([FE_AlertModel.md](FE_AlertModel.md)) | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
+| `OverviewPage` | grid composition | Implemented as `OverviewPage` (`views/features/overview/overview-page.tsx`) – takes `vm` and `actions`; data from `useOverviewController` (mock repository) |
+| `SupplyRateCard` | thin wrapper on the shared `GaugeKpiCard` (ring, current stats, overview, notice, delta); design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Implemented as `SupplyRateCard` (`views/features/overview/supply-rate-card.tsx`) – wrapper on `GaugeKpiCard` (`views/common/gauge-kpi-card.tsx`) |
+| `InboundLeadtimeCard` / `PickingLeadtimeCard` | built from a generic `LeadTimeKpiCard` (value, target, delta, sparkline) – **refactor to one component**; design notes in [FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md) | Implemented as `LeadTimeKpiCard` (`views/common/lead-time-kpi-card.tsx`), rendered twice; the two copies are deleted |
+| `StagingCard` / `WarehouseCard` | thin wrappers on the same shared `GaugeKpiCard` as `SupplyRateCard`, each with its own tone rule; design notes in [FE_GaugeKpiCard.md](FE_GaugeKpiCard.md) | Implemented as `StagingCard`, `WarehouseCard` (`views/features/overview/`) – wrappers on `GaugeKpiCard` |
+| `ThroughputCard` (`orientation="horizontal"`) | progress bars per process, actual data only, same data and colours as the vertical card (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Implemented as `ThroughputCard` (`views/features/overview/throughput-card.tsx`) with `ThroughputHorizontalCard` |
+| `ThroughputCard` (`orientation="vertical"`) | column chart per process, actual and target, with Actual / Actual vs Target dropdown (§2.3.1); design notes in [FE_ThroughputCard.md](FE_ThroughputCard.md) | Implemented as `ThroughputCard` with `ThroughputVerticalCard` – mode select wired (Actual / Actual vs Target) |
+| `AlertsPanel` | filter select + View All; reads the shared `Alert` model ([FE_AlertModel.md](FE_AlertModel.md)) | Implemented as `AlertsPanel` (`views/features/overview/alerts-panel.tsx`) – filter wired through `uiStore`, Info option and View All; list from the mock repository |
+| `AlertItem` | icon by severity, title, detail, time; one `AlertItem` of the shared `Alert` model, also the source of the supply card's overdue notice ([FE_AlertModel.md](FE_AlertModel.md)) | Implemented as `AlertItem` (`views/features/overview/alert-item.tsx`) – icon and row style follow severity |
 
 #### Warehouse Operations (`views/features/warehouse/`)
 
@@ -470,12 +470,12 @@ When several rules apply to the same element, take the **most severe** tone: `cr
 | Element | Change when tone changes |
 |---|---|
 | `DeltaIndicator`, KPI value | text colour and arrow from the `tone` prop, computed by `deltaTone(deltaPct, goodDirection)` in the controller (e.g. "-12%", "+15%"); `unavailable` shows "–" and hides the delta |
-| `Sparkline` | **not tone-driven**: the line and fill always use the process colour (`PROCESS_COLOR`, §2.3.1). Empty data shows no line and "No data" |
+| `Sparkline` | Implemented as `Sparkline` (`views/common/sparkline.tsx`) – takes `process` |
 | `DonutGauge`, `ProgressBar` | fill colour from `tone`; `unavailable` shows an empty ring / track |
 | `ZoneTile`, `ResourceRow` | bar colour, border and alert dot (`critical`, `late`) |
 | Table cell | background tint and bold text (`bad`, `critical`) |
-| `AlertItem` | left border, icon circle and background by severity |
-| `PanelCard` | optional tone stripe; `unavailable` greys the panel and shows "Data unavailable" with a Retry button (`ErrorState`) |
+| `AlertItem` | Implemented as `AlertItem` (`views/features/overview/alert-item.tsx`) – icon and row style follow severity |
+| `PanelCard` | Implemented as `PanelCard` (`views/common/panel-card.tsx`) – title, subtitle, actions; no `tone`; used by the alerts panel and the vertical throughput card |
 
 Components take a `tone` prop and map it with a single `cva` variant per component; the same `Tone` → class map is reused by ECharts builders through a `toneColor(tone)` helper that reads the CSS tokens (ECharts needs real colour values, not class names).
 
