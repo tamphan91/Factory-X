@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { DashboardFooter } from "@/components/footer/dashboard-footer";
+import { DashboardFooter } from "@/views/features/shell/dashboard-footer";
 import { DashboardHeader } from "@/views/features/shell/dashboard-header";
 import { DashboardTabs } from "@/views/features/shell/dashboard-tabs";
 import { WarehouseOperationsPage } from "@/views/features/warehouse/warehouse-operations-page";
