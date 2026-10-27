@@ -1,3 +1,6 @@
+/** Days shown on the forecast chart. */
+export type ForecastRange = "7" | "14";
+
 export type ForecastDay = {
   /** Material demand in pallets for the day. */
   demand: number;

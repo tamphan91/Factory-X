@@ -1,6 +1,5 @@
+import type { ForecastRange } from "@/models/types/demand-forecast";
 import type { FilterOption } from "@/views/common/filter-select.props";
-
-export type ForecastRange = "7" | "14";
 
 /** What the chart draws. All arrays have one value per day. */
 export interface ForecastChartData {
