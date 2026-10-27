@@ -2,7 +2,9 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardFooter } from "@/components/footer/dashboard-footer";
 import { DashboardHeader } from "@/components/header/dashboard-header";
-import { DashboardTabs } from "@/components/tabs/dashboard-tabs";
+import { DashboardTabs } from "@/views/features/shell/dashboard-tabs";
+import { WarehouseOperationsPage } from "@/features/ware-house/warehouse-operations-page";
+import { OverviewSection } from "./overview-section";
 export const instant = false;
 
 export default async function Page() {
@@ -14,7 +16,10 @@ export default async function Page() {
     return (
         <div className="min-h-screen">
             <DashboardHeader />
-            <DashboardTabs />
+            <DashboardTabs
+                overview={<OverviewSection />}
+                warehouse={<WarehouseOperationsPage />}
+            />
             <DashboardFooter />
         </div>
     );

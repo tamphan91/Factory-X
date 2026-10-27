@@ -7,10 +7,9 @@ import {
   TabsContent,
 } from "@/views/common/ui/tabs";
 
-import { OverviewSection } from "@/app/dashboard/overview-section";
-import { WarehouseOperationsPage } from "@/features/ware-house/warehouse-operations-page";
+import type { DashboardTabsProps } from "./dashboard-tabs.props";
 
-export function DashboardTabs() {
+export function DashboardTabs({ overview, warehouse }: DashboardTabsProps) {
   return (
     <Tabs
       defaultValue="overview"
@@ -47,11 +46,11 @@ export function DashboardTabs() {
       </TabsList>
 
       <TabsContent value="overview" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
-        <OverviewSection />
+        {overview}
       </TabsContent>
 
       <TabsContent value="warehouse" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
-        <WarehouseOperationsPage />
+        {warehouse}
       </TabsContent>
 
       <TabsContent value="demand" className="mx-4 py-2 space-y-2 bg-[#081c4b] min-h-[80vh] border-t border-gray-600">
