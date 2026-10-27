@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DemandForecast } from "@/models/types/demand-forecast";
-import { dayLabels, sliceForecast } from "./forecast";
+import { dayLabels, forecastAxisMax, sliceForecast } from "./forecast";
 
 const forecast: DemandForecast = {
   startDate: "2026-10-27",
@@ -38,5 +38,16 @@ describe("dayLabels", () => {
 
   it("is empty for no days", () => {
     expect(dayLabels("2026-10-27", 0)).toEqual([]);
+  });
+});
+
+describe("forecastAxisMax", () => {
+  it("fits the highest bar or line on a 400 step", () => {
+    expect(forecastAxisMax([560, 650], [950, 850])).toBe(1200);
+    expect(forecastAxisMax([300], [380])).toBe(400);
+  });
+
+  it("is one step without data", () => {
+    expect(forecastAxisMax([], [])).toBe(400);
   });
 });
