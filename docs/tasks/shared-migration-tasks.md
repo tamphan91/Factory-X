@@ -32,6 +32,20 @@ Finish the migration so shared code lives in `views/` and the legacy `components
 |---|---|---|---|---|---|---|---|
 | P3-T01 | Update docs: Status rows for `EChart`, shadcn primitives and `DashboardTabs`; layout notes in `.claude/rules` and `FE-design.md` §5 that no longer match | P1-T01, P1-T02, P2-T01 | docs/FE-design.md, .claude/rules/frontend-architecture.md | P1-T01, P1-T02, P2-T01 | 1 | statuses match the code; this file marked done | done |
 
+## Phase 4 – Remove the remaining legacy folders
+Pure moves again. Components that take no props get no `.props.ts` (as in P2-T02). Components that declare a props interface get it extracted to `<name>.props.ts`. Each commit also updates its importers, so it compiles on its own. Warehouse and header markup, classes and hex colours are not changed.
+
+| ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
+|---|---|---|---|---|---|---|---|
+| P4-T01 | Delete `types/`: `ChartOption` is only an alias of `EChartsOption`, so importers use `EChartsOption` from `echarts`; `types/dashboard.ts` is empty | types/echarts.d.ts, types/dashboard.ts | imports edited in views/common/donut-gauge.tsx, views/common/sparkline.tsx, views/common/charts/build-throughput-option.ts, components/warehouse/top-queue-chart.tsx; types/ removed | P1-T01 | 1 | tsc, eslint, build pass; no `@/types` import left; `types/` does not exist | todo |
+| P4-T02 | Move the header to `views/features/shell/` (`dashboard-header.tsx`, `logout-button.tsx`); update the page import | components/header/* | views/features/shell/dashboard-header.tsx, logout-button.tsx; app/dashboard/page.tsx edited; components/header/ removed | P4-T01 | 1 | tsc, eslint, build pass; header renders and the logout button imports resolve | todo |
+| P4-T03 | Move the footer to `views/features/shell/dashboard-footer.tsx`; update the page import | components/footer/dashboard-footer.tsx | views/features/shell/dashboard-footer.tsx; app/dashboard/page.tsx edited; components/footer/ removed | P4-T02 | 2 | tsc, eslint, build pass | todo |
+| P4-T04 | Move the layout map and its parts to `views/features/warehouse/`: `warehouse-layout-map`, the six stage panels, `dock-card`, `zone-card`; extract `dock-card.props.ts` and `zone-card.props.ts`; update the page import | components/warehouse/{warehouse-layout-map, receiving-panel, putaway-panel, storage-panel, picking-panel, staging-panel, handover-panel, dock-card, zone-card}.tsx | the same files in views/features/warehouse/, dock-card.props.ts, zone-card.props.ts; views/features/warehouse/warehouse-operations-page.tsx edited | P2-T02 | 1 | tsc, eslint, build pass; relative imports between the moved files still resolve | todo |
+| P4-T05 | Move the remaining Warehouse cards: `resource-status-card`, `zone-performance-table`, `top-queue-chart`; the page imports them by relative path | components/warehouse/{resource-status-card, zone-performance-table, top-queue-chart}.tsx | the same files in views/features/warehouse/; warehouse-operations-page.tsx edited; components/warehouse/ removed | P4-T01, P4-T04 | 2 | tsc, eslint, build pass; `components/` is empty | todo |
+| P4-T06 | Remove the empty `components/` folder and update the docs and rules that still point at the old folders | P4-T02, P4-T03, P4-T05 | docs/FE-design.md (Status rows, §5), .claude/rules/frontend-architecture.md; components/ removed | P4-T02, P4-T03, P4-T05 | 3 | `components/`, `features/` and `types/` do not exist; no `@/components`, `@/features` or `@/types` import left; statuses match the code | todo |
+
+Verification after the last task, since this phase touches every Warehouse and shell file: `tsc --noEmit`, `eslint` (no new problems), `vitest run`, `next build`, and a smoke test of the built app (`next start`, `/login` returns 200). `/dashboard` needs a login, so the page is checked by the build and by the compile-time import check.
+
 ## Execution plan
 Sequential, one commit per task. `P1-T01` and `P1-T02` touch different files, but both edit `components/warehouse/top-queue-chart.tsx` (`EChart` and `Card` imports), so they run one after the other.
 
@@ -40,5 +54,8 @@ Sequential, one commit per task. `P1-T01` and `P1-T02` touch different files, bu
 | P1 | T01, then T02 |
 | P2 | T01, then T02 |
 | P3 | T01 |
+| P4 | T01, T02, T04 (run one after another: T02 and T04 both edit the page imports) |
+
+Phase 4 runs T01 → T02 → T03 → T04 → T05 → T06; T03 needs T02 and T05 needs T04, and the single order avoids merge conflicts in `app/dashboard/page.tsx`.
 
 After each task: `tsc --noEmit`, `vitest run`, and `next build` once at the end of each phase.
