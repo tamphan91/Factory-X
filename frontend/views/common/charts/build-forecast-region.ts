@@ -1,19 +1,20 @@
 import { forecastShadeColor, toneColor } from "@/lib/chart-colors";
-import type { MarkAreaComponentOption, MarkLineComponentOption } from "echarts";
+import type { MarkAreaComponentOption } from "echarts";
 
 type ForecastRegionInput = {
-  /** Category-axis coordinate where the forecast starts; a .5 puts the edge between two categories. */
+  /** First category index inside the region; the area starts at the left edge of its band. */
   fromIndex: number;
-  /** Category-axis coordinate where it ends. */
+  /** Last category index inside the region; the area ends at the right edge of its band. */
   toIndex: number;
 };
 
 type ForecastRegion = {
   markArea: MarkAreaComponentOption;
-  markLine: MarkLineComponentOption;
 };
 
-/** Shaded forecast area with a dashed edge and a "Forecast" label. Spread it into one series of a chart. */
+const EDGE_LINE_WIDTH = 1.2;
+
+/** Shaded forecast area with a dashed outline and a "Forecast" label. Spread it into one series of a chart. */
 export const buildForecastRegion = ({
   fromIndex,
   toIndex,
@@ -23,16 +24,14 @@ export const buildForecastRegion = ({
   return {
     markArea: {
       silent: true,
-      itemStyle: { color: forecastShadeColor() },
+      itemStyle: {
+        color: forecastShadeColor(),
+        borderColor: edgeColor,
+        borderType: "dashed",
+        borderWidth: EDGE_LINE_WIDTH,
+      },
       label: { show: true, position: "top", formatter: "Forecast", color: edgeColor },
       data: [[{ xAxis: fromIndex }, { xAxis: toIndex }]],
-    },
-    markLine: {
-      silent: true,
-      symbol: "none",
-      label: { show: false },
-      lineStyle: { color: edgeColor, type: "dashed", width: 1.2 },
-      data: [{ xAxis: fromIndex }],
     },
   };
 };
