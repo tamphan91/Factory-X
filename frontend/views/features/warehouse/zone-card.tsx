@@ -8,17 +8,19 @@ export function ZoneCard({
   color,
   vehicle,
   alert,
+  className = 'p-2'
 }: ZoneCardProps) {
   return (
     <div
-      className="
+      className={`
       relative
       bg-[#071f57]
       border
       border-slate-500
       rounded-md
-      p-3
-      "
+      text-xs
+      space-y-1
+      ${className ?? ''}`}
     >
       {alert && (
         <div
@@ -26,12 +28,11 @@ export function ZoneCard({
           absolute
           -top-2
           -right-2
-          w-5
-          h-5
+          w-4
+          h-4
           rounded-full
           bg-red-500
           text-white
-          text-xs
           flex
           items-center
           justify-center
@@ -46,13 +47,13 @@ export function ZoneCard({
         {name}
       </div>
 
-      <div className="text-center mt-2 text-xl font-bold">
+      <div className="text-center font-bold">
         {occupancy}%
       </div>
 
-      <div className="mt-3 h-3 bg-slate-600 rounded">
+      <div className="h-2 bg-slate-600 rounded">
         <div
-          className="h-3 rounded"
+          className="h-2 rounded"
           style={{
             width: `${occupancy}%`,
             backgroundColor: color,
@@ -61,13 +62,10 @@ export function ZoneCard({
       </div>
 
       {vehicle && (
-        <div className="mt-3 text-center">
+        <div className="text-center">
           <span
             className="
             bg-blue-600
-            text-xs
-            px-2
-            py-1
             rounded
             "
           >

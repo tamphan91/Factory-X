@@ -106,7 +106,7 @@ export function TopQueueChart() {
   return (
     <Card className="p-4 h-full">
 
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between">
 
         <h3 className="font-bold text-lg">
           Top 5 Queue by Zone
@@ -114,6 +114,8 @@ export function TopQueueChart() {
 
         <select className="border rounded px-2 py-1 text-sm">
           <option>Top 5</option>
+          <option>Top 3</option>
+          <option>All zones</option>
         </select>
 
       </div>

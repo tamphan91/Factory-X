@@ -9,7 +9,8 @@ export function StoragePanel() {
       border
       border-emerald-500
       rounded-md
-      p-3
+      p-2
+      h-full
       "
     >
       <div
@@ -31,6 +32,7 @@ export function StoragePanel() {
           name="Zone A"
           occupancy={72}
           color="#22c55e"
+          className="py-6"
         />
 
         <ZoneCard
@@ -38,6 +40,7 @@ export function StoragePanel() {
           occupancy={85}
           color="#ef4444"
           vehicle="FL-07"
+          className="py-6"
           alert
         />
 
@@ -45,12 +48,14 @@ export function StoragePanel() {
           name="Zone C"
           occupancy={60}
           color="#22c55e"
+          className="py-6"
         />
 
         <ZoneCard
           name="Zone D"
           occupancy={45}
           color="#22c55e"
+          className="py-6"
         />
 
         <ZoneCard
@@ -58,6 +63,7 @@ export function StoragePanel() {
           occupancy={90}
           color="#ef4444"
           vehicle="FL-04"
+          className="py-6"
           alert
         />
 
@@ -65,6 +71,7 @@ export function StoragePanel() {
           name="Zone F"
           occupancy={68}
           color="#facc15"
+          className="py-6"
           vehicle="AGV-03"
         />
 
