@@ -1,3 +1,4 @@
+import type { DemandForecast } from "@/models/types/demand-forecast";
 import type { ProductDemandSnapshot } from "@/models/types/product-demand";
 
 const createProductDemandMock = (): ProductDemandSnapshot => ({
@@ -19,4 +20,21 @@ const createProductDemandMock = (): ProductDemandSnapshot => ({
   ],
 });
 
-export { createProductDemandMock };
+/** Today as yyyy-mm-dd in local time. */
+const todayIso = (): string => {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+// Demand only: the capacity lines come from the Overview snapshot.
+const createForecastMock = (): DemandForecast => ({
+  startDate: todayIso(),
+  actualDays: 3,
+  days: [560, 520, 545, 600, 575, 590, 550, 610, 580, 620, 640, 600, 630, 650].map(
+    (demand) => ({ demand }),
+  ),
+});
+
+export { createForecastMock, createProductDemandMock };
