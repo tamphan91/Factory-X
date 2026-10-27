@@ -61,6 +61,7 @@ Each data set has its own entity file and domain file. None of them imports `Ove
 |---|---|---|---|---|---|---|---|
 | P1-T08 | Common props: `SignalBarsProps` (`level`, `tone`, `label`), `IconProps` (`name: IconName` = `ProductIconName` or a UI icon name, `size?`) | `Tone` (existing), `ProductIconName` (P1-T03) | views/common/signal-bars.props.ts, views/common/icon.props.ts | P1-T03 | 2 | tsc passes | done |
 | P1-T09 | Feature props: `ProductDemandRowProps`, `DemandTotalProps`, `ProductDemandPanelProps` (sort select, rows, total), `DemandForecastChartProps` (demand, warehouse and staging capacity series of equal length), `LeadTimeTrendChartProps` (labels, series, forecast index), `DemandVM`, `DemandActions`, `DemandPageProps` | `ProductIconName` (P1-T03), `Tone`, `ProcessKey`, `FilterOption` (existing) | views/features/demand/*.props.ts (one per component) | P1-T03 | 2 | tsc passes; passing `onSortChange` to the row fails type-check | done |
+| P1-T11 | Add `axisInterval` to `ForecastChartData`, found while building P2-T04: the y-axis ticks are 400 apart and the view must not import the domain constant | `DemandForecastChartProps` (P1-T09) | views/features/demand/demand-forecast-chart.props.ts | P1-T09 | 3 | tsc passes; P2-T04 reads it | done |
 
 ## Phase 2 – Common building blocks
 Each component gets `<name>.tsx` and `<name>.props.ts` in `views/common/`; tone → style through one `cva` `tone` variant; no hex values.
@@ -113,7 +114,7 @@ Sequential: one task per commit, in wave order within each phase, starting a tas
 
 | Phase | Wave 1 | Wave 2 | Wave 3 |
 |---|---|---|---|
-| P1 | T01, T03, T04, T10 | T02, T05, T06, T07, T08, T09 | |
+| P1 | T01, T03, T04, T10 | T02, T05, T06, T07, T08, T09 | T11 |
 | P2 | T01, T02, T03 | T04, T05, T06 | T07 |
 | P3 | – | | |
 | P4 | T01, T02, T04, T05 | T03 | T06 |
