@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProductDemand } from "@/models/types/product-demand";
-import { sortProducts } from "./product-demand";
+import { sortProducts, totalRequests } from "./product-demand";
 
 const product = (name: string, requests: number): ProductDemand => ({
   id: name,
@@ -29,5 +29,15 @@ describe("sortProducts", () => {
   it("does not change its input", () => {
     sortProducts(products, "desc");
     expect(namesOf(products)).toEqual(["Bravo", "Alpha", "Charlie"]);
+  });
+});
+
+describe("totalRequests", () => {
+  it("adds the requests of every product", () => {
+    expect(totalRequests(products)).toBe(84);
+  });
+
+  it("is 0 for an empty list", () => {
+    expect(totalRequests([])).toBe(0);
   });
 });

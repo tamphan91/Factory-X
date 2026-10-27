@@ -18,3 +18,6 @@ export const sortProducts = (
       return [...products];
   }
 };
+
+export const totalRequests = (products: ProductDemand[]): number =>
+  products.reduce((sum, product) => sum + product.requests, 0);
