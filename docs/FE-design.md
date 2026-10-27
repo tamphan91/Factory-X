@@ -19,12 +19,12 @@ This design is based on the prototype `tmp/FactoryX_AI-Powered Logistics Control
 
 ```
  ┌──────────────────────────────────────────────────────────────┐
- │ VIEW        components/, features/*/views                     │  React components. Render props/state only.
+ │ VIEW        views/common/, views/features/*                   │  React components. Render props/state only.
  │             (dumb, no fetch, no business rules)               │  Emit intents: onSort(), onRefresh()...
  └──────────────▲───────────────────────────────┬───────────────┘
         view-model (typed props)          user events (intents)
  ┌──────────────┴───────────────────────────────▼───────────────┐
- │ CONTROL     features/*/use-*.ts, controllers/                 │  Custom hooks = controllers.
+ │ CONTROL     controllers/                                      │  Custom hooks = controllers.
  │             (thin orchestration)                              │  Map UI events → store updates / queries /
  │                                                               │  mutations. Hold no domain rules.
  └──────────────▲───────────────────────────────┬───────────────┘
@@ -55,14 +55,20 @@ This design is based on the prototype `tmp/FactoryX_AI-Powered Logistics Control
 |---|---|---|
 | **View** | JSX, Tailwind classes, ECharts option building from view-model, a11y | fetch, compute KPIs, read stores directly (except via a controller hook) |
 | **Control** | `useXxxController()` hooks: subscribe to stores/queries, expose `{ vm, actions }`; debounce, optimistic updates, error toasts | contain domain formulas, JSX |
-| **Model** | `types/` (domain entities), `domain/` (pure rules), `stores/` (Zustand slices) | import React UI, call HTTP |
+| **Model** | `models/types/` (domain entities), `models/domain/` (pure rules), `models/stores/` (Zustand slices) | import React UI, call HTTP |
 | **Service** | `apiClient`, repositories, DTO mappers, WebSocket client, auth token handling | hold UI state, know about components |
 
 ### 1.3 Target folder layout
 
+The top level of `frontend/` is the MVC split: `models/`, `views/`, `controllers/` (plus `services/` for data access and `app/` for routes). Three placement rules:
+
+1. **Common components stay together** in `views/common/` (primitives, charts and shared building blocks side by side). Nothing shared lives under a feature folder.
+2. **Specialized components stay with their page** in `views/features/<page>/`.
+3. **Props stay with their component.** Every component's props type is in a `<component>.props.ts` file in the *same folder* as `<component>.tsx`, for common and specialized components alike (including props used by only one component). The props file is the view-model contract (§2.3); controllers import these types, views never import from `controllers/`.
+
 ```
 frontend/
-├─ app/                          # Next.js routes (thin; compose features)
+├─ app/                          # Next.js routes (thin; compose views + controllers)
 │  ├─ (auth)/login/page.tsx
 │  ├─ (dashboard)/layout.tsx     # header + tab bar + footer, providers
 │  ├─ (dashboard)/overview/page.tsx
@@ -70,29 +76,54 @@ frontend/
 │  ├─ (dashboard)/demand/page.tsx
 │  ├─ (dashboard)/simulation/page.tsx
 │  └─ globals.css                # design tokens (see §2.4)
-├─ components/
-│  ├─ ui/                        # shadcn primitives (existing)
-│  ├─ common/                    # shared building blocks (§2.1)
-│  └─ charts/                    # echart wrapper, theme
-├─ features/                     # one folder per dashboard page
-│  ├─ overview/   { views/, overview.controller.ts, overview.vm.ts }
-│  ├─ warehouse/
-│  ├─ demand/
-│  ├─ simulation/
-│  └─ shell/                     # header, tabs, auth controls
-├─ domain/                       # Model: pure business logic
-│  ├─ kpi.ts  zone.ts  alert.ts  forecast.ts  simulation.ts  format.ts
-│  ├─ tone.ts  thresholds.ts  process.ts  throughput.ts
-├─ types/                        # Model: entity + DTO types
-├─ stores/                       # Model: Zustand (ui, filters, tabs, session)
-├─ services/                     # Service layer
+│
+├─ views/                        # VIEW: dumb React components
+│  ├─ common/                    # ALL shared components together (§2.1)
+│  │  ├─ ui/                     # shadcn primitives (own props, as generated)
+│  │  ├─ echart.tsx              echart.props.ts
+│  │  ├─ sparkline.tsx           sparkline.props.ts
+│  │  ├─ donut-gauge.tsx         donut-gauge.props.ts
+│  │  ├─ kpi-card-shell.tsx      kpi-card-shell.props.ts
+│  │  ├─ gauge-kpi-card.tsx      gauge-kpi-card.props.ts
+│  │  ├─ leadtime-kpi-card.tsx   leadtime-kpi-card.props.ts
+│  │  └─ …                       # one .tsx + one .props.ts per component
+│  └─ features/                  # specialized components, one folder per page (§2.2)
+│     ├─ overview/
+│     │  ├─ overview-page.tsx          overview-page.props.ts
+│     │  ├─ supply-rate-card.tsx       supply-rate-card.props.ts
+│     │  ├─ throughput-card.tsx        throughput-card.props.ts
+│     │  ├─ alerts-panel.tsx           alerts-panel.props.ts
+│     │  └─ alert-item.tsx             alert-item.props.ts
+│     ├─ warehouse/
+│     ├─ demand/
+│     ├─ simulation/
+│     └─ shell/                  # header, tabs, footer, auth controls
+│
+├─ controllers/                  # CONTROL: hooks + view-model builders (no JSX)
+│  ├─ overview.controller.ts     # useOverviewController() → { vm, actions }
+│  ├─ overview.vm.ts             # builds the props types declared in views/features/overview/*.props.ts
+│  ├─ warehouse.controller.ts
+│  ├─ demand.controller.ts
+│  ├─ simulation.controller.ts
+│  └─ shell.controller.ts
+│
+├─ models/                       # MODEL: no React UI, no HTTP
+│  ├─ types/                     # domain entities + DTO types (not component props)
+│  ├─ domain/                    # pure business logic
+│  │  ├─ kpi.ts  zone.ts  alert.ts  forecast.ts  simulation.ts  format.ts
+│  │  └─ tone.ts  thresholds.ts  process.ts  throughput.ts
+│  └─ stores/                    # Zustand (ui, filters, tabs, session)
+│
+├─ services/                     # SERVICE: data access
 │  ├─ http/apiClient.ts  ws/realtime.ts
 │  ├─ repositories/  { dashboard, warehouse, demand, simulation, auth }.repo.ts
 │  ├─ mappers/       # DTO → domain
 │  └─ mock/          # seeded demo data (port of BASE_DATA/getData)
 ├─ hooks/                        # generic hooks (useInterval, useEventSource)
-└─ lib/                          # utils, constants
+└─ lib/                          # utils, constants, chart theme
 ```
+
+Import direction: `app → views, controllers`; `controllers → models, services, view props types`; `views → views/common, props files, models/domain/tone` (tone class lookup only); `models` imports nothing above it.
 
 ### 1.4 Data flow (one example)
 
@@ -106,19 +137,19 @@ User changes **Time Range** → `TimeRangeSelect` (View) calls `onChange("yester
 
 Rules for every component: props-in / events-out, no data fetching, typed view-model props, Tailwind classes only through the shared tokens/variants in §2.4, no inline hex colours.
 
-### 2.1 Common Components (`components/common/`, `components/ui/`)
+### 2.1 Common Components (`views/common/`, `views/common/ui/`)
 
-#### Primitives (shadcn, `components/ui/`)
+#### Primitives (shadcn, `views/common/ui/`)
 
 | Component | Purpose | Prototype origin | Status |
 |---|---|---|---|
-| `Button` (variants: default, ghost, link) | `.run`, `.vall` "View All ›" | `.run`, `.vall` | Implemented as `Button` (`components/ui/button.tsx`) |
-| `Card` (+ `CardHeader/Title/Content`) | white/dark panels | `.card`, `.dark` | Implemented as `Card` (`components/ui/card.tsx`) |
-| `Select` | all `select.dd` dropdowns | `select.dd` | Implemented as `Select` (`components/ui/select.tsx`) |
-| `Tabs` | page navigation | `.nav` | Implemented as `Tabs` (`components/ui/tabs.tsx`) |
-| `Table` | zone table | `table.zt` | Implemented as `Table` (`components/ui/table.tsx`) |
-| `Badge` | demo tag, status, vehicle chips | `.demo`, `.vchip` | Implemented as `Badge` (`components/ui/badge.tsx`) |
-| `Dialog` / `Sheet` | alert details, recommendation details | `#rec-more`, `#alert-viewall` | Implemented as `Dialog`, `Sheet` (`components/ui/dialog.tsx`, `sheet.tsx`) |
+| `Button` (variants: default, ghost, link) | `.run`, `.vall` "View All ›" | `.run`, `.vall` | Implemented as `Button` (`views/common/ui/button.tsx`) |
+| `Card` (+ `CardHeader/Title/Content`) | white/dark panels | `.card`, `.dark` | Implemented as `Card` (`views/common/ui/card.tsx`) |
+| `Select` | all `select.dd` dropdowns | `select.dd` | Implemented as `Select` (`views/common/ui/select.tsx`) |
+| `Tabs` | page navigation | `.nav` | Implemented as `Tabs` (`views/common/ui/tabs.tsx`) |
+| `Table` | zone table | `table.zt` | Implemented as `Table` (`views/common/ui/table.tsx`) |
+| `Badge` | demo tag, status, vehicle chips | `.demo`, `.vchip` | Implemented as `Badge` (`views/common/ui/badge.tsx`) |
+| `Dialog` / `Sheet` | alert details, recommendation details | `#rec-more`, `#alert-viewall` | Implemented as `Dialog`, `Sheet` (`views/common/ui/dialog.tsx`, `sheet.tsx`) |
 | `SegmentedControl` (on top of `ToggleGroup`) | Zone/Vehicle view, By Type/By Zone | `.seg` | Not implemented |
 | `RadioGroup` | scenario picker | `.radio` | Not implemented |
 | `Tooltip` | row hover details | `title=` | Not implemented |
@@ -126,7 +157,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DropdownMenu`, `Avatar` | user menu (logout) | – | Not implemented |
 | `Input`, `Label`, `Form` | login form | – | Not implemented |
 
-#### Shared building blocks (`components/common/`)
+#### Shared building blocks (`views/common/`)
 
 | Component | Props (summary) | Used by | Status |
 |---|---|---|---|
@@ -136,7 +167,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `StatusDot` | `status: "ok"\|"warn"\|"critical"\|"info"` | docks, table status, legends | Not implemented – header uses a "●" text character |
 | `DeltaIndicator` | `value: string`, `upIsGood: boolean`, `caption?` – ↑/↓ coloured | KPI cards, resources, totals | Not implemented – delta markup is duplicated inside each KPI card |
 | `ProgressBar` | `percent`, `tone`, `height` – `.track/.fill` | throughput, resources | Not implemented – inlined in `ThroughputSummaryCard` |
-| `DonutGauge` | `percent`, `tone`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (`components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no tone |
+| `DonutGauge` | `percent`, `tone`, `thick?` – `gauge-chart` | KPI cards | Partial as `GaugeChart` (currently `components/dashboard/gauge-chart.tsx`) – props `value`, `color` only; no `thick`, no tone |
 | `Sparkline` | `data[]`, `color` – any numeric array; the line always uses the **process colour**, never a status tone (§2.5) | KPI cards | Implemented as `Sparkline` (`components/charts/sparkline.tsx`) |
 | `KpiCardShell` | `title`, `children` | KPI cards | Partial as `KpiCardShell` (`components/dashboard/kpi-card-shell.tsx`) – fixed height, `children` only, no `title` prop |
 | `Icon` registry | `name` → lucide / custom SVG (forklift, agv, pallet, valve, solenoid, sensor, gear, housing, egr, building, factory, truck) | layout, resources, demand list | Not implemented – `lucide-react` icons used directly (only in `AlertsPanel`) |
@@ -149,9 +180,9 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `SignalBars` | `level 1-4`, `tone` | demand list | Not implemented |
 | `EChart` | wrapper over echarts-for-react with shared theme, resize, `option` prop | all charts | Partial as `EChart` (`components/charts/echart.tsx`) – SSR-safe wrapper with `option`, `height`; shared theme `FACTORY_THEME` (`lib/echar-theme.ts`) exists but is not applied |
 
-### 2.2 Specialized Components (`features/*/views/`)
+### 2.2 Specialized Components (`views/features/*/`)
 
-#### Shell (`features/shell/`)
+#### Shell (`views/features/shell/`)
 
 | Component | Notes | Status |
 |---|---|---|
@@ -168,7 +199,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DashboardFooter` | | Implemented as `DashboardFooter` (`components/footer/dashboard-footer.tsx`) |
 | `LoginForm` | email/password, error message | Not implemented |
 
-#### Overview (`features/overview/`)
+#### Overview (`views/features/overview/`)
 
 | Component | Notes | Status |
 |---|---|---|
@@ -181,7 +212,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `AlertsPanel` | filter select + View All; reads the shared `Alert` model ([FE_AlertModel.md](FE_AlertModel.md)) | Partial as `AlertsPanel` (`components/overview/alerts-panel.tsx`) – hard-coded list; filter not wired, no Info option, no View All |
 | `AlertItem` | icon by severity, title, detail, time; one `AlertItem` of the shared `Alert` model, also the source of the supply card's overdue notice ([FE_AlertModel.md](FE_AlertModel.md)) | Partial – rendered inline in the `AlertsPanel` map; every row uses the red style regardless of severity |
 
-#### Warehouse Operations (`features/warehouse/`)
+#### Warehouse Operations (`views/features/warehouse/`)
 
 | Component | Notes | Status |
 |---|---|---|
@@ -201,7 +232,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `SortableHeaderCell` | `th` with asc/desc indicator, keyboard accessible | Not implemented |
 | `QueueByZoneChart` | stacked horizontal bars (Waiting / In-progress), Top N select | Not implemented |
 
-#### Demand & Lead Time (`features/demand/`)
+#### Demand & Lead Time (`views/features/demand/`)
 
 | Component | Notes | Status |
 |---|---|---|
@@ -211,7 +242,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DemandForecastChart` | bars + capacity step lines + forecast shading; range 7/14 | Not implemented |
 | `LeadTimeTrendChart` | 4 process lines, dotted forecast segment; range select | Not implemented |
 
-#### Simulation & Recommendation (`features/simulation/`)
+#### Simulation & Recommendation (`views/features/simulation/`)
 
 | Component | Notes | Status |
 |---|---|---|
@@ -225,10 +256,10 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 ### 2.3 View-model contract
 
-Every specialized component receives a **view-model** (display-ready values: formatted strings, tone enums, percentages), never raw DTOs. View-models are built in `features/*/*.vm.ts` by calling `domain/` functions. Example:
+Every specialized component receives a **view-model** (display-ready values: formatted strings, tone enums, percentages), never raw DTOs. View-models are built in `controllers/*.vm.ts` by calling `models/domain/` functions; the props type of each component lives beside it in `<component>.props.ts` (§1.3). Example:
 
 ```ts
-// features/overview/overview.vm.ts
+// controllers/overview.vm.ts
 export type SupplyRateVM = { delivered: number; total: number; delta: string;
                              overdueAlert?: AlertItem<"material-delivery-delay"> };   // percent and tones are derived in the card (FE_GaugeKpiCard.md, FE_AlertModel.md)
 ```
@@ -258,7 +289,7 @@ export const PROCESS_COLOR: Record<ProcessKey, string> = {
   picking: "var(--fx-process-picking)", delivery: "var(--fx-process-delivery)",
 };
 
-// features/overview/overview.vm.ts
+// controllers/overview.vm.ts
 export type ThroughputItem = { process: ProcessKey; label: string; actual: number; target?: number };
 
 type ThroughputCardBase = { items: ThroughputItem[]; unit?: string };      // identical for both
@@ -441,7 +472,7 @@ Components take a `tone` prop and map it with a single `cva` variant per compone
 
 ## 3. Control
 
-Controllers are custom hooks in `features/*/` (and `features/shell/`). Views call **actions**; actions are the only way UI events change state or trigger requests. They are defined once in the shell/global controller when shared, and in the feature controller when local.
+Controllers are custom hooks in `controllers/`. Views call **actions**; actions are the only way UI events change state or trigger requests. They are defined once in the shell/global controller when shared, and in the feature controller when local.
 
 ### 3.1 Action catalogue
 
@@ -516,9 +547,9 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 ## 4. Model & Service (reference, for completeness)
 
-**Domain types** (`types/`): `Kpi`, `ThroughputStep`, `Alert` / `AlertItem{kind, severity, facts}` (see [FE_AlertModel.md](FE_AlertModel.md)), `Zone{area, occupancy, queue, avgLeadMin}`, `StagingArea`, `Dock`, `Vehicle{kind, zone, offline}`, `ResourceGroup`, `ProductDemand`, `Forecast`, `LeadTimeSeries`, `Scenario`, `SimulationResult`, `Recommendation`, `TimeRange`, `ViewMode`.
+**Domain types** (`models/types/`): `Kpi`, `ThroughputStep`, `Alert` / `AlertItem{kind, severity, facts}` (see [FE_AlertModel.md](FE_AlertModel.md)), `Zone{area, occupancy, queue, avgLeadMin}`, `StagingArea`, `Dock`, `Vehicle{kind, zone, offline}`, `ResourceGroup`, `ProductDemand`, `Forecast`, `LeadTimeSeries`, `Scenario`, `SimulationResult`, `Recommendation`, `TimeRange`, `ViewMode`.
 
-**Pure business rules** (`domain/`, ported from the prototype and unit tested):
+**Pure business rules** (`models/domain/`, ported from the prototype and unit tested):
 
 | Function | From prototype |
 |---|---|
@@ -550,9 +581,9 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 ## 5. Migration notes from the current `frontend/`
 
-1. Move shared header filters and tab logic out of `components/header` and `components/tabs` into `features/shell/` and drive them from stores.
+1. Move shared header filters and tab logic out of `components/header` and `components/tabs` into `views/features/shell/` (with `controllers/shell.controller.ts`) and drive them from stores.
 2. Replace `lib/mock-data.ts` with `services/mock/` behind a repository; remove direct imports of mock data in cards.
 3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into `LeadTimeKpiCard` ([FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md)) and the three ring cards into `GaugeKpiCard` ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)); merge `throughput-summary-card` / `throughput-chart` into `ThroughputCard` ([FE_ThroughputCard.md](FE_ThroughputCard.md)).
 4. Replace hard-coded colours (`#081c4b`, etc.) with the tokens in §2.4.
 5. Convert the single-page tab view to route segments (`/overview`, `/warehouse`, …) so URLs are shareable, matching the prototype's hash routes.
-6. The prototype uses Plotly; the project uses ECharts – port chart options once into `components/charts` builders (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.
+6. The prototype uses Plotly; the project uses ECharts – port chart options once into `views/common/` chart option builders (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.
