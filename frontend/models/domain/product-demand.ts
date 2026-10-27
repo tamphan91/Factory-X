@@ -21,3 +21,14 @@ export const sortProducts = (
 
 export const totalRequests = (products: ProductDemand[]): number =>
   products.reduce((sum, product) => sum + product.requests, 0);
+
+export const SIGNAL_LEVELS = 4;
+
+/** Lit bars (1 to 4) of a request count against the largest count in the list. */
+export const signalLevel = (requests: number, maxRequests: number): number => {
+  if (maxRequests <= 0) {
+    return 1;
+  }
+  const level = Math.round((requests / maxRequests) * SIGNAL_LEVELS);
+  return Math.max(1, Math.min(SIGNAL_LEVELS, level));
+};

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ProductDemand } from "@/models/types/product-demand";
-import { sortProducts, totalRequests } from "./product-demand";
+import { signalLevel, sortProducts, totalRequests } from "./product-demand";
 
 const product = (name: string, requests: number): ProductDemand => ({
   id: name,
@@ -39,5 +39,23 @@ describe("totalRequests", () => {
 
   it("is 0 for an empty list", () => {
     expect(totalRequests([])).toBe(0);
+  });
+});
+
+describe("signalLevel", () => {
+  it("scales the count against the largest one", () => {
+    expect(signalLevel(48, 48)).toBe(4);
+    expect(signalLevel(42, 48)).toBe(4);
+    expect(signalLevel(36, 48)).toBe(3);
+    expect(signalLevel(28, 48)).toBe(2);
+  });
+
+  it("lights at least one bar", () => {
+    expect(signalLevel(1, 48)).toBe(1);
+    expect(signalLevel(0, 48)).toBe(1);
+  });
+
+  it("lights one bar when there is no largest count", () => {
+    expect(signalLevel(0, 0)).toBe(1);
   });
 });
