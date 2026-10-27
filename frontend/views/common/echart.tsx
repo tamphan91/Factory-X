@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { EChartsOption } from "echarts";
+import type { EChartProps } from "./echart.props";
 
 const ReactECharts = dynamic(
   () => import("echarts-for-react"),
@@ -9,11 +9,6 @@ const ReactECharts = dynamic(
     ssr: false,
   }
 );
-
-interface EChartProps {
-  option: EChartsOption;
-  height?: number | string;
-}
 
 export function EChart({
   option,

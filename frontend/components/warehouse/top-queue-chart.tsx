@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { EChart } from "@/components/charts/echart";
+import { EChart } from "@/views/common/echart";
 import { ChartOption } from "@/types/echarts";
 
 export function TopQueueChart() {

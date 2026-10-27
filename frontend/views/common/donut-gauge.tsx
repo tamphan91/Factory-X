@@ -1,6 +1,6 @@
 "use client";
 
-import { EChart } from "@/components/charts/echart";
+import { EChart } from "@/views/common/echart";
 import { processColor, toneColor } from "@/lib/chart-colors";
 import type { ChartOption } from "@/types/echarts";
 import type { DonutGaugeProps } from "./donut-gauge.props";
