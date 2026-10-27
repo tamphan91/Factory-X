@@ -187,7 +187,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 
 | Component | Notes | Status |
 |---|---|---|
-| `DashboardHeader` | composes brand, title, `ScopeBadge`, `TimeRangeSelect`, `ViewModeToggle`, `LiveIndicator`, `UserMenu` | Partial as `DashboardHeader` (`components/header/dashboard-header.tsx`) – title, Time Range select, Live text; no logo, scope, view mode or user menu; values not wired |
+| `DashboardHeader` | composes brand, title, `ScopeBadge`, `TimeRangeSelect`, `ViewModeToggle`, `LiveIndicator`, `UserMenu` | Partial as `DashboardHeader` (`views/features/shell/dashboard-header.tsx`) – title, Time Range select, Live text; no logo, scope, view mode or user menu; values not wired |
 | `BrandLogo` | logo image (from `public/`) | Partial – "FactoryX" text `<h1>` inside `DashboardHeader`; no logo image |
 | `ScopeBadge` | "In-plant Warehouse Logistics" flow text | Not implemented |
 | `TimeRangeSelect` | Today / Yesterday / Last 7 days → `filtersStore` | Partial – inline `Select` in `DashboardHeader` (uncontrolled, not connected to any state) |
@@ -197,7 +197,7 @@ Rules for every component: props-in / events-out, no data fetching, typed view-m
 | `DashboardTabs` | **reorderable** tab bar (drag), see §3.4 | Partial as `DashboardTabs` (`views/features/shell/dashboard-tabs.tsx`, props in `dashboard-tabs.props.ts`) – 4 tabs; Overview and Warehouse content is passed in by `app/dashboard/page.tsx`, the others show "Coming Soon"; not draggable, no routes |
 | `SortableTab` | one draggable tab trigger + drag handle | Not implemented |
 | `ExternalLinkTab` | "Solution Simulation ↗" | Not implemented |
-| `DashboardFooter` | | Implemented as `DashboardFooter` (`components/footer/dashboard-footer.tsx`) |
+| `DashboardFooter` | | Implemented as `DashboardFooter` (`views/features/shell/dashboard-footer.tsx`) |
 | `LoginForm` | email/password, error message | Not implemented |
 
 #### Overview (`views/features/overview/`)
@@ -602,11 +602,11 @@ Sortable header: Enter/Space = `toggleSort`; tabs: arrow keys + drag via keyboar
 
 ## 5. Migration notes from the current `frontend/`
 
-1. Move shared header filters and tab logic out of `components/header` (the tab bar is already in `views/features/shell/`) into `views/features/shell/` (with `controllers/shell.controller.ts`) and drive them from stores.
+1. Move shared header filters and tab logic into stores and `controllers/shell.controller.ts`. The header, footer and tab bar already live in `views/features/shell/`.
 2. Replace `lib/mock-data.ts` with `services/mock/` behind a repository; remove direct imports of mock data in cards.
 3. Merge the near-duplicate cards (`inbound-leadtime-card` / `picking-leadtime-card`, `staging-card` / `warehouse-card`) into `LeadTimeKpiCard` ([FE_LeadTimeKpiCard.md](FE_LeadTimeKpiCard.md)) and the three ring cards into `GaugeKpiCard` ([FE_GaugeKpiCard.md](FE_GaugeKpiCard.md)); merge `throughput-summary-card` / `throughput-chart` into `ThroughputCard` ([FE_ThroughputCard.md](FE_ThroughputCard.md)).
 4. Replace hard-coded colours (`#081c4b`, etc.) with the tokens in §2.4.
 5. Convert the single-page tab view to route segments (`/overview`, `/warehouse`, …) so URLs are shareable, matching the prototype's hash routes.
 6. The prototype uses Plotly; the project uses ECharts – port chart options once into chart option builders in `views/common/charts/` (`buildThroughputOption`, `buildForecastOption`, …) that take a view-model.
 7. Build `models/domain/tone.ts` and `models/domain/process.ts` (with the `--fx-process-*` tokens and `lib/chart-colors.ts`) first. Every card depends on them.
-8. The "Status" columns in §2.2 describe today's `components/`, `features/` and `types/` folders. New code goes in the layout of §1.3.
+8. The "Status" columns in §2.2 describe the code as it was before the migration. `components/`, `features/` and `types/` no longer exist; all code is in the layout of §1.3.

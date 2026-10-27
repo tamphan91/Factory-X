@@ -26,7 +26,7 @@ Imports go one way: `app → views, controllers`; `controllers → models, servi
 - Props types live only in `.props.ts`. `*.vm.ts` holds builder functions and imports those types. Domain entities live in `models/types/`.
 - ECharts option builders go in `views/common/charts/`.
 - Mark `"use client"` only at feature boundaries. Pages stay Server Components.
-- The "current" columns in the docs describe the old `components/`, `features/` and `types/` folders. `ui/*`, `EChart` and `DashboardTabs` have already moved to `views/`; `components/header`, `components/footer`, `components/warehouse` and `features/ware-house` are still waiting to move. Put new code in the layout above.
+- The "current" columns in the docs describe the code before the migration. The old `components/`, `features/` and `types/` folders no longer exist. Put new code in the layout above.
 
 ## Styling
 - Define colours as tokens in `app/globals.css`. Never write a hex colour in a component or an ECharts option. In ECharts use `toneColor` or `processColor` from `lib/chart-colors.ts`.
