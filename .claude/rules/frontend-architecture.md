@@ -25,6 +25,7 @@ Imports go one way: `app → views, controllers`; `controllers → models, servi
 - Each component has `<name>.tsx` and `<name>.props.ts` in the same folder. Exception: `views/common/ui/` (shadcn, generated).
 - Props types live only in `.props.ts`. `*.vm.ts` holds builder functions and imports those types. Domain entities live in `models/types/`.
 - ECharts option builders go in `views/common/charts/`.
+- Import icon libraries and SVG assets only in `views/common/icon.tsx`. Features render `<Icon name="..." />`. ESLint rejects `lucide-react` anywhere else outside `views/common/`.
 - Mark `"use client"` only at feature boundaries. Pages stay Server Components.
 - The "current" columns in the docs describe the code before the migration. The old `components/`, `features/` and `types/` folders no longer exist. Put new code in the layout above.
 
