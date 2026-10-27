@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/card";
+import { Card } from "@/views/common/ui/card";
 import { cn } from "@/lib/utils";
 import type { PanelCardProps } from "./panel-card.props";
 

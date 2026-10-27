@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@/views/common/ui/card";
 import { EChart } from "@/views/common/echart";
 import { ChartOption } from "@/types/echarts";
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/views/common/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/views/common/ui/tabs";
 
 import {
   Package,

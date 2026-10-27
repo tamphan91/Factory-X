@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/views/common/ui/select";
 import { cn } from "@/lib/utils";
 import type { FilterSelectProps } from "./filter-select.props";
 

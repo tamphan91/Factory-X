@@ -3,7 +3,7 @@
 import {
   Card,
   CardContent,
-} from "@/components/ui/card";
+} from "@/views/common/ui/card";
 
 import {
   Select,
@@ -11,7 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/views/common/ui/select";
 
 import {
   Table,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/views/common/ui/table";
 
 const rows = [
   {

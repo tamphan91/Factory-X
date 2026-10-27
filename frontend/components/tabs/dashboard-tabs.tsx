@@ -5,7 +5,7 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@/components/ui/tabs";
+} from "@/views/common/ui/tabs";
 
 import { OverviewSection } from "@/app/dashboard/overview-section";
 import { WarehouseOperationsPage } from "@/features/ware-house/warehouse-operations-page";
