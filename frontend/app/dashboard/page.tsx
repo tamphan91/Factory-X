@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { DashboardFooter } from "@/components/footer/dashboard-footer";
 import { DashboardHeader } from "@/components/header/dashboard-header";
 import { DashboardTabs } from "@/views/features/shell/dashboard-tabs";
-import { WarehouseOperationsPage } from "@/features/ware-house/warehouse-operations-page";
+import { WarehouseOperationsPage } from "@/views/features/warehouse/warehouse-operations-page";
 import { OverviewSection } from "./overview-section";
 export const instant = false;
 

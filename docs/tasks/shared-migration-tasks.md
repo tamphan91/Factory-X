@@ -8,7 +8,7 @@ Finish the migration so shared code lives in `views/` and the legacy `components
 
 ## Scope and decisions
 - **In scope:** `components/charts/echart.tsx`, `components/ui/*` (8 files), `components/tabs/dashboard-tabs.tsx`, every import of them (Overview, Warehouse, header, page), `components.json` aliases, and the Status rows in the docs.
-- **Out of scope:** `components/header`, `components/footer`, `components/warehouse/*` and `features/ware-house/` keep their folders. Only their import lines change. Their own migration to `views/features/shell/` and `views/features/warehouse/` is a later task.
+- **Out of scope:** `components/header`, `components/footer` and `components/warehouse/*` keep their folders. Only their import lines change. Their own migration to `views/features/shell/` and `views/features/warehouse/` is a later task.
 - **Pure moves:** files are moved with `git mv` so history follows. No visual or behavioural change, except where a task says so.
 - **Import updates belong to the move that breaks them.** A commit that moves a file also updates every importer, including the Warehouse files, so each commit compiles. The Warehouse import edits are therefore listed as outputs of P1-T01 and P1-T02 and not as a separate task.
 - **`DashboardTabs` gets content through props** (`overview`, `warehouse` as `ReactNode`). A shell view must not import from `app/` or from another page's feature folder. `app/dashboard/page.tsx` composes the tabs and the page contents.
@@ -25,6 +25,7 @@ Finish the migration so shared code lives in `views/` and the legacy `components
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
 | P2-T01 | Move `DashboardTabs` to `views/features/shell/dashboard-tabs.tsx` with `dashboard-tabs.props.ts`; the page passes the Overview and Warehouse content in | components/tabs/dashboard-tabs.tsx, `Tabs` (P1-T02), `OverviewSection`, `WarehouseOperationsPage` | views/features/shell/dashboard-tabs.tsx, .props.ts; app/dashboard/page.tsx edited; components/tabs/ removed | P1-T02 | 1 | tsc, eslint, build pass; no `app/` or `features/` import inside the shell view; tabs look and switch the same | done |
+| P2-T02 | Move `WarehouseOperationsPage` to `views/features/warehouse/warehouse-operations-page.tsx`; update the page import. It takes no props, so it gets no `.props.ts`. Its imports of `components/warehouse/*` stay until those components move | features/ware-house/warehouse-operations-page.tsx | views/features/warehouse/warehouse-operations-page.tsx; app/dashboard/page.tsx edited; features/ware-house/ removed | P2-T01 | 1 | tsc, eslint, build pass; `features/` does not exist; Warehouse tab renders the same | done |
 
 ## Phase 3 – Docs
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
@@ -37,7 +38,7 @@ Sequential, one commit per task. `P1-T01` and `P1-T02` touch different files, bu
 | Phase | Wave 1 |
 |---|---|
 | P1 | T01, then T02 |
-| P2 | T01 |
+| P2 | T01, then T02 |
 | P3 | T01 |
 
 After each task: `tsc --noEmit`, `vitest run`, and `next build` once at the end of each phase.
