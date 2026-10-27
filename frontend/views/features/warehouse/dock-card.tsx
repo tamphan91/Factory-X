@@ -1,12 +1,7 @@
 "use client";
 
 import { Truck } from "lucide-react";
-
-interface DockCardProps {
-  dock: string;
-  status: "Arrived" | "Unloading";
-  time: string;
-}
+import type { DockCardProps } from "./dock-card.props";
 
 export function DockCard({
   dock,

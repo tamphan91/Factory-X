@@ -1,4 +1,4 @@
-import { WarehouseLayoutMap } from "@/components/warehouse/warehouse-layout-map";
+import { WarehouseLayoutMap } from "./warehouse-layout-map";
 import { ResourceStatusCard } from "@/components/warehouse/resource-status-card";
 import { ZonePerformanceTable } from "@/components/warehouse/zone-performance-table";
 import { TopQueueChart } from "@/components/warehouse/top-queue-chart";
