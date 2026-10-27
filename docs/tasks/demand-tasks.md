@@ -15,8 +15,8 @@ Capacity lines get their own tokens and not the `critical`/`good` tones, because
 
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P1-T01 | Tokens: `--fx-capacity-warehouse`, `--fx-capacity-staging`, `--fx-forecast-shade` | – | app/globals.css | – | 1 | tokens present; `next build` compiles CSS | todo |
-| P1-T02 | `capacityColor(kind)` and `forecastShadeColor()` (resolved strings for ECharts, with SSR fallback) | tokens (P1-T01), existing `lib/chart-colors.ts` | lib/chart-colors.ts | P1-T01 | 2 | tsc, eslint pass | todo |
+| P1-T01 | Tokens: `--fx-capacity-warehouse`, `--fx-capacity-staging`, `--fx-forecast-shade` | – | app/globals.css | – | 1 | tokens present; `next build` compiles CSS | done |
+| P1-T02 | `capacityColor(kind)` and `forecastShadeColor()` (resolved strings for ECharts, with SSR fallback) | tokens (P1-T01), existing `lib/chart-colors.ts` | lib/chart-colors.ts | P1-T01 | 2 | tsc, eslint pass | done |
 
 ### 1.2 Data models reused from other tabs
 The rule is one fact in one place. The controller loads the Overview repository and the demand repository together, and the view-model builders take `(overview, demand)`. The demand mock holds none of the numbers below, so a change in the Overview mock changes this tab too.
@@ -37,8 +37,8 @@ How the two chart facts are joined:
 
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P1-T07 | `LEAD_TIME_SLOTS` (08:00–22:00, 30 min), `timeLabels`, `resolveLeadTimeSeries(range, series, overview)` (fills Receiving/Picking actual from `OverviewSnapshot` for "today", continues the forecast from the last actual), `forecastStartIndex` | `LeadTimeSeries` (P1-T03), `OverviewSnapshot` (existing) | models/domain/lead-time.ts, lead-time.test.ts | P1-T03 | 2 | tests: the Overview trend reaches the series; changing `inbound.trend` changes the result; other ranges untouched; missing actual gives empty points, no throw | todo |
-| P1-T10 | `WAREHOUSE_TURNS_PER_DAY`, `STAGING_TURNS_PER_DAY`, `dailyCapacity(total, turnsPerDay)`, `capacityLines(overview, dayCount)` → `{ warehouse: number[]; staging: number[] }` | `OverviewSnapshot` (existing) | models/domain/capacity.ts, capacity.test.ts | – | 1 | tests: 10,000 → 950 and 100 → 850; changing `warehouse.total` changes the line; length equals `dayCount` | todo |
+| P1-T07 | `LEAD_TIME_SLOTS` (08:00–22:00, 30 min), `timeLabels`, `resolveLeadTimeSeries(range, series, overview)` (fills Receiving/Picking actual from `OverviewSnapshot` for "today", continues the forecast from the last actual), `forecastStartIndex` | `LeadTimeSeries` (P1-T03), `OverviewSnapshot` (existing) | models/domain/lead-time.ts, lead-time.test.ts | P1-T03 | 2 | tests: the Overview trend reaches the series; changing `inbound.trend` changes the result; other ranges untouched; missing actual gives empty points, no throw | done |
+| P1-T10 | `WAREHOUSE_TURNS_PER_DAY`, `STAGING_TURNS_PER_DAY`, `dailyCapacity(total, turnsPerDay)`, `capacityLines(overview, dayCount)` → `{ warehouse: number[]; staging: number[] }` | `OverviewSnapshot` (existing) | models/domain/capacity.ts, capacity.test.ts | – | 1 | tests: 10,000 → 950 and 100 → 850; changing `warehouse.total` changes the line; length equals `dayCount` | done |
 
 ### 1.3 New data models, specific to this tab
 Each data set has its own entity file and domain file. None of them imports `OverviewSnapshot`.
@@ -51,16 +51,16 @@ Each data set has its own entity file and domain file. None of them imports `Ove
 
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P1-T03 | Entities, one file per data set, plus the composed snapshot | `ProcessKey` (existing) | models/types/product-demand.ts (`ProductIconName`, `ProductPriority`, `ProductDemand`, `ProductDemandSnapshot`), models/types/demand-forecast.ts (`ForecastDay`, `DemandForecast`), models/types/lead-time.ts (`LeadTimeRange`, `LeadTimeSeries`), models/types/demand.ts (`DemandSnapshot` composes the three) | – | 1 | tsc passes; product demand imports nothing from `OverviewSnapshot` | todo |
-| P1-T04 | `ceilToStep(max, step)` generic axis helper (800 → 1,200 with step 400; empty input safe) | – | models/domain/axis.ts, axis.test.ts | – | 1 | tests pass | todo |
-| P1-T05 | `DemandSort`, `sortProducts` (order / desc / asc / name), `totalRequests`, `signalLevel` (1–4 vs the largest value), `productTone` (`high` → critical, `mid` → warning, none → neutral) | `ProductDemand` (P1-T03), `Tone` (existing) | models/domain/product-demand.ts, product-demand.test.ts | P1-T03 | 2 | tests: total 330 for the prototype list, sort modes, level clamp 1–4, no mutation of input | todo |
-| P1-T06 | `sliceForecast(forecast, days)`, `dayLabels(startIso, count)` ("10/27"), `forecastAxisMax(demand, capacities)` (uses `ceilToStep`) | `DemandForecast` (P1-T03), `ceilToStep` (P1-T04) | models/domain/forecast.ts, forecast.test.ts | P1-T03, P1-T04 | 2 | tests: 7 and 14 days, month rollover labels, axis max 1,200 for 650 demand and 950 capacity | todo |
+| P1-T03 | Entities, one file per data set, plus the composed snapshot | `ProcessKey` (existing) | models/types/product-demand.ts (`ProductIconName`, `ProductPriority`, `ProductDemand`, `ProductDemandSnapshot`), models/types/demand-forecast.ts (`ForecastDay`, `DemandForecast`), models/types/lead-time.ts (`LeadTimeRange`, `LeadTimeSeries`), models/types/demand.ts (`DemandSnapshot` composes the three) | – | 1 | tsc passes; product demand imports nothing from `OverviewSnapshot` | done |
+| P1-T04 | `ceilToStep(max, step)` generic axis helper (950 → 1,200 with step 400; empty input safe) | – | models/domain/axis.ts, axis.test.ts | – | 1 | tests pass | done |
+| P1-T05 | `DemandSort`, `sortProducts` (order / desc / asc / name), `totalRequests`, `signalLevel` (1–4 vs the largest value), `productTone` (`high` → critical, `mid` → warning, none → neutral) | `ProductDemand` (P1-T03), `Tone` (existing) | models/domain/product-demand.ts, product-demand.test.ts | P1-T03 | 2 | tests: total 330 for the prototype list, sort modes, level clamp 1–4, no mutation of input | done |
+| P1-T06 | `sliceForecast(forecast, days)`, `dayLabels(startIso, count)` ("10/27"), `forecastAxisMax(demand, capacities)` (uses `ceilToStep`) | `DemandForecast` (P1-T03), `ceilToStep` (P1-T04) | models/domain/forecast.ts, forecast.test.ts | P1-T03, P1-T04 | 2 | tests: 7 and 14 days, month rollover labels, axis max 1,200 for 650 demand and 950 capacity | done |
 
 ### 1.4 Props contracts
 | ID | Purpose | Inputs (from) | Outputs | Depends on | Wave | Done when | Status |
 |---|---|---|---|---|---|---|---|
-| P1-T08 | Common props: `SignalBarsProps` (`level`, `tone`, `label`), `IconProps` (`name: IconName` = `ProductIconName` or a UI icon name, `size?`) | `Tone` (existing), `ProductIconName` (P1-T03) | views/common/signal-bars.props.ts, views/common/icon.props.ts | P1-T03 | 2 | tsc passes | todo |
-| P1-T09 | Feature props: `ProductDemandRowProps`, `DemandTotalProps`, `ProductDemandPanelProps` (sort select, rows, total), `DemandForecastChartProps` (demand, warehouse and staging capacity series of equal length), `LeadTimeTrendChartProps` (labels, series, forecast index), `DemandVM`, `DemandActions`, `DemandPageProps` | `ProductIconName` (P1-T03), `Tone`, `ProcessKey`, `FilterOption` (existing) | views/features/demand/*.props.ts (one per component) | P1-T03 | 2 | tsc passes; passing `onSortChange` to the row fails type-check | todo |
+| P1-T08 | Common props: `SignalBarsProps` (`level`, `tone`, `label`), `IconProps` (`name: IconName` = `ProductIconName` or a UI icon name, `size?`) | `Tone` (existing), `ProductIconName` (P1-T03) | views/common/signal-bars.props.ts, views/common/icon.props.ts | P1-T03 | 2 | tsc passes | done |
+| P1-T09 | Feature props: `ProductDemandRowProps`, `DemandTotalProps`, `ProductDemandPanelProps` (sort select, rows, total), `DemandForecastChartProps` (demand, warehouse and staging capacity series of equal length), `LeadTimeTrendChartProps` (labels, series, forecast index), `DemandVM`, `DemandActions`, `DemandPageProps` | `ProductIconName` (P1-T03), `Tone`, `ProcessKey`, `FilterOption` (existing) | views/features/demand/*.props.ts (one per component) | P1-T03 | 2 | tsc passes; passing `onSortChange` to the row fails type-check | done |
 
 ## Phase 2 – Common building blocks
 Each component gets `<name>.tsx` and `<name>.props.ts` in `views/common/`; tone → style through one `cva` `tone` variant; no hex values.
