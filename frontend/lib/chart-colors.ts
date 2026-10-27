@@ -27,6 +27,7 @@ const FALLBACK: Record<string, string> = {
   "--fx-danger": "#e5413e",
   "--fx-slate": "#7b8db3",
   "--fx-primary": "#2f7cf6",
+  "--fx-target": "#cbd5e1",
   "--fx-process-inbound": "#2f7cf6",
   "--fx-process-putaway": "#1fb46b",
   "--fx-process-picking": "#f59a23",
@@ -48,3 +49,6 @@ export const toneColor = (tone: Tone): string => resolveToken(TONE_TOKEN[tone]);
 
 export const processColor = (process: ProcessKey): string =>
   resolveToken(PROCESS_TOKEN[process]);
+
+/** Neutral colour for target values; never a process or status colour. */
+export const targetColor = (): string => resolveToken("--fx-target");
