@@ -70,9 +70,6 @@ function WarehouseFlow() {
             className="
                 ml-71
                 h-14
-                bg-[#102e63]
-                [background-image:linear-gradient(rgba(100,160,220,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(100,160,220,0.08)_1px,transparent_1px)]
-                [background-size:22px_22px]
             "
         >
             <div className="flex items-center h-full pr-55">
@@ -122,9 +119,6 @@ function WarehouseFlow() {
                 <div className="shrink-0 text-blue-400">
                     <AgvIcon />
                 </div>
-
-                {/* khoảng nhỏ sau AGV */}
-                <div className="w-3 shrink-0" />
 
                 {/* BLUE FLOW */}
                 <div
