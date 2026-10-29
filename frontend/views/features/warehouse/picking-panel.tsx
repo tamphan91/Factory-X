@@ -33,14 +33,14 @@ export function PickingPanel() {
           occupancy={80}
           color="#facc15"
           vehicle="AGV-01"
-          className="py-6"
+          className="py-6 px-2"
         />
 
         <ZoneCard
           name="Zone H"
           occupancy={65}
           color="#22c55e"
-          className="py-6"
+          className="py-6 px-2"
         />
 
         <div className="col-span-2 w-[calc(50%-6px)] justify-self-center">
@@ -50,7 +50,7 @@ export function PickingPanel() {
           occupancy={50}
           color="#22c55e"
           vehicle="AGV-06"
-          className="py-6"
+          className="py-6 px-2"
         />
 
       </div>

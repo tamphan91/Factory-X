@@ -29,7 +29,7 @@ export default function LoginForm() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center"
+        <div className="flex min-h-screen items-center justify-center bg-cover"
             style={{
                 backgroundImage: "url('/images/login_bg.png')",
             }}>

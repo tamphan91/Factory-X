@@ -15,50 +15,50 @@ function AgvIcon() {
         <div className="relative w-7 h-5">
             <div
                 className="
-          absolute
-          left-1
-          right-1
-          top-1
-          h-3
-          rounded-sm
-          border-2
-          border-blue-400
-        "
+                absolute
+                left-1
+                right-1
+                top-1
+                h-3
+                rounded-sm
+                border-2
+                border-blue-400
+                "
             />
 
             <div
                 className="
-          absolute
-          left-0
-          right-0
-          bottom-1
-          border-b-2
-          border-blue-400
-        "
+                absolute
+                left-0
+                right-0
+                bottom-1
+                border-b-2
+                border-blue-400
+                "
             />
 
             <div
                 className="
-          absolute
-          left-1
-          bottom-0
-          w-1.5
-          h-1.5
-          rounded-full
-          bg-blue-400
-        "
+                absolute
+                left-1
+                bottom-0
+                w-1.5
+                h-1.5
+                rounded-full
+                bg-blue-400
+                "
             />
 
             <div
                 className="
-          absolute
-          right-1
-          bottom-0
-          w-1.5
-          h-1.5
-          rounded-full
-          bg-blue-400
-        "
+                absolute
+                right-1
+                bottom-0
+                w-1.5
+                h-1.5
+                rounded-full
+                bg-blue-400
+                "
             />
         </div>
     );

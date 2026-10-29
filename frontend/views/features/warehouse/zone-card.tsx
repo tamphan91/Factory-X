@@ -8,13 +8,13 @@ export function ZoneCard({
   color,
   vehicle,
   alert,
-  className = 'p-2'
+  className = 'p-2 bg-[#071f57]',
+  isUtilization = false,
 }: ZoneCardProps) {
   return (
     <div
       className={`
       relative
-      bg-[#071f57]
       border
       border-slate-500
       rounded-md
@@ -51,28 +51,32 @@ export function ZoneCard({
         {occupancy}%
       </div>
 
-      <div className="h-2 bg-slate-600 rounded">
-        <div
-          className="h-2 rounded"
-          style={{
-            width: `${occupancy}%`,
-            backgroundColor: color,
-          }}
-        />
-      </div>
-
-      {vehicle && (
-        <div className="text-center">
-          <span
-            className="
-            bg-blue-600
-            rounded
-            "
-          >
-            {vehicle}
-          </span>
+      {!isUtilization && <>
+      
+        <div className="h-2 bg-slate-600 rounded">
+          <div
+            className="h-2 rounded"
+            style={{
+              width: `${occupancy}%`,
+              backgroundColor: color,
+            }}
+          />
         </div>
-      )}
+
+        {vehicle && (
+          <div className="text-center">
+            <span
+              className="
+              bg-blue-600
+              rounded
+              "
+            >
+              {vehicle}
+            </span>
+          </div>
+        )}
+      </>}
+
     </div>
   );
 }
